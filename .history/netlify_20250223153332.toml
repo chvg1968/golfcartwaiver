@@ -1,0 +1,2 @@
+[build]
+publish = "/" # O la carpeta donde tengas tu index.html
