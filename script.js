@@ -1,5 +1,7 @@
 import SignaturePad from 'signature_pad';
 import { createClient } from '@supabase/supabase-js';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_KEY);
 
@@ -32,7 +34,27 @@ document.addEventListener('DOMContentLoaded', function() {
         return name.split(' ').map(word => word.charAt(0).toUpperCase()).join('');
     }
 
-    document.getElementById('waiverForm').addEventListener('submit', function(e) {
+    // Función para generar un PDF
+    async function generatePDF() {
+        const formElement = document.getElementById('waiverForm');
+        const canvas = await html2canvas(formElement);
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        pdf.addImage(imgData, 'PNG', 0, 0);
+        const pdfBlob = pdf.output('blob');
+
+        const { data, error } = await supabase.storage.from('pdfs').upload(`waiver_${Date.now()}.pdf`, pdfBlob);
+
+        if (error) {
+            console.error('Error al subir el PDF a Supabase:', error);
+            return null;
+        }
+
+        const pdfLink = supabase.storage.from('pdfs').getPublicUrl(data.path).publicURL;
+        return pdfLink;
+    }
+
+    document.getElementById('waiverForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         let isValid = true;
@@ -53,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (isValid) {
+            const pdfLink = await generatePDF(); // Generar el PDF y obtener el enlace
             const formData = new FormData(this);
             const guestName = formData.get('Guest Name');
             const formId = getInitials(guestName) + '-' + generateUUID();
@@ -68,6 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             saveSignature();
 
+            // Asegúrate de que el enlace del PDF se agregue al campo Signature
+            formData.append('PDF Link', pdfLink);
+
             const AIRTABLE_API_KEY = import.meta.env.VITE_AIRTABLE_API_KEY;
             const AIRTABLE_BASE_ID = import.meta.env.VITE_AIRTABLE_BASE_ID;
             const AIRTABLE_TABLE_NAME = import.meta.env.VITE_AIRTABLE_TABLE_NAME;
@@ -80,7 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Guest Name': formData.get('Guest Name'),
                 'License':formData.get('License'),
                 'Issuing State':formData.get('Issuing State'),
-                'Signature': formData.get('Signature')
+                'Signature': formData.get('Signature'),
+                'PDF Link': formData.get('PDF Link')
             });
 
             fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}`, {
@@ -96,7 +123,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         'Guest Name': formData.get('Guest Name'),
                         'License': formData.get('License'),
                         'Issuing State': formData.get('Issuing State'),
-                        'Signature': formData.get('Signature')
+                        'Signature': formData.get('Signature'),
+                        'PDF Link': formData.get('PDF Link')
                     }
                 })
             })
@@ -111,14 +139,12 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 console.log('Datos enviados a Airtable:', data);
-                const pdfLink = 'pdf_link'; // Suponiendo que la respuesta incluya el enlace del PDF
-                // Completar la integración de Resend para enviar el formulario
                 const resendUrl = 'https://api.resend.com/v1/send';
                 const resendFormData = {
                     from: 'onboarding@resend.dev', // Correo del remitente
-                    to: 'conradovilla@gmail.com', // Correo del destinatario
+                    to: 'conradovilla@hotmail.com', // Correo del destinatario
                     subject: 'Formulario de waiver',
-                    body: `Se ha enviado el formulario de waiver. Puede descargar el PDF en el siguiente enlace: ${pdfLink}`,
+                    body: `Se ha enviado el formulario de waiver.`,
                 };
 
                 console.log('Enviando correo a Resend con los siguientes datos:', resendFormData);
@@ -144,29 +170,4 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please fill in all required fields.');
         }
     });
-
-    // Función para enviar el PDF por correo utilizando Resend
-    function sendEmail(pdfLink) {
-        const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY;
-        const emailData = {
-            from: 'onboarding@resend.dev', // Correo del remitente
-            to: 'conradovilla@hotmail.com', // Correo del destinatario
-            subject: 'Confirmación de Waiver',
-            body: 'Gracias por completar el waiver.'
-        };
-
-        console.log('Enviando correo a Resend con los siguientes datos:', emailData);
-
-        fetch('https://api.resend.com/send', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(emailData)
-        })
-        .then(response => response.json())
-        .then(data => console.log('Email sent:', data))
-        .catch(error => console.error('Error sending email:', error));
-    }
 });
