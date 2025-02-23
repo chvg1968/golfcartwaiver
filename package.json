@@ -1,0 +1,19 @@
+{
+  "name": "golfcartwaiver",
+  "version": "1.0.0",
+  "description": "Formulario de waiver para carrito de golf",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^6.1.1"
+  },
+  "dependencies": {
+    "signature_pad": "^5.0.4"
+  }
+}
