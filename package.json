@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "path": "^0.12.7",
     "vite": "^6.1.1"
   },
   "dependencies": {

@@ -7,13 +7,9 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="logo">
-        <div class="logo-circle">
-            <span class="logo-star">★</span>
-        </div>
-        <div>LUXE</div>
-    </div>
-
+    <header>
+        <img class="logo" src="/assets/logo.png" alt="Logo de LUXE">
+    </header>
     <div class="title">
         <h1>★ GOLF CART LIABILITY WAIVER ★</h1>
     </div>
@@ -65,11 +61,11 @@
             <input title="Initial" type="text" maxlength="3" required>
         </div>
 
-        <label for="signature">Signature:</label>
-        <canvas id="signature-pad" style="border: 1px solid #000;"></canvas>
-        <input type="hidden" name="signature" id="signature">
-        <button id="clear-signature">Clear Signature</button>
-
+        <div class="signature-container">
+            <label for="signature-pad">Signature:<span class="required">*</span></label>
+            <canvas id="signature-pad"></canvas>
+            <button type="button" id="clear-signature">Clear Signature</button>
+        </div>
 
         <div class="form-group">
             <label>Signature Date<span class="required">*</span></label>
@@ -100,7 +96,6 @@
 
         <button type="submit">Submit</button>
     </form>
-
-    <script type="module" src="script.js"></script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

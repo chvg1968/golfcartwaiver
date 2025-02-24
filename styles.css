@@ -6,7 +6,15 @@ body {
     color: #333;
 }
 
+header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
 .logo {
+    margin:0 auto;
     text-align: center;
     margin-bottom: 20px;
 }
@@ -125,4 +133,72 @@ body {
     font-size: 12px;
     margin-top: 5px;
     display: none;
+}
+
+/* Estilos para el contenedor de la firma */
+.signature-container {
+    width: 100%;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Estilos para el canvas de firma */
+#signature-pad {
+    width: 100%;
+    height: 200px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    margin: 10px 0;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    touch-action: none;
+}
+
+/* Estilos para el botón de limpiar firma */
+#clear-signature {
+    align-self: flex-start;
+    padding: 8px 16px;
+    background-color: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#clear-signature:hover {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+}
+
+/* Estilo cuando el canvas está en error */
+#signature-pad.error {
+    border-color: #ff0000;
+}
+
+/* Agregar estas clases específicas para el PDF */
+@media print {
+    body {
+        padding: 40px;
+        max-width: none;
+    }
+
+    header {
+        margin-bottom: 40px;
+        page-break-inside: avoid;
+    }
+
+    .logo {
+        margin-bottom: 30px;
+    }
+
+    .logo-circle {
+        width: 80px;
+        height: 80px;
+    }
+
+    .title {
+        margin-bottom: 40px;
+    }
 }
