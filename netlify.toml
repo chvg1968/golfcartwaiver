@@ -5,15 +5,8 @@
 [build.environment]
   NODE_VERSION = "18"
   NODE_ENV = "production"
-  # Use the ${} syntax for Netlify to substitute the actual environment variables
-  VITE_AIRTABLE_API_KEY = "${VITE_AIRTABLE_API_KEY}"
-  VITE_AIRTABLE_BASE_ID = "${VITE_AIRTABLE_BASE_ID}"
-  VITE_AIRTABLE_TABLE_NAME = "${VITE_AIRTABLE_TABLE_NAME}"
-  VITE_RESEND_API_KEY = "${VITE_RESEND_API_KEY}"
-  VITE_SUPABASE_EMAIL = "${VITE_SUPABASE_EMAIL}"
-  VITE_SUPABASE_KEY = "${VITE_SUPABASE_KEY}"
-  VITE_SUPABASE_PASSWORD = "${VITE_SUPABASE_PASSWORD}"
-  VITE_SUPABASE_URL = "VITE_SUPABASE_URL"
+
+  
 
 [[redirects]]
   from = "/*"
