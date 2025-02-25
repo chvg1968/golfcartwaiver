@@ -4,56 +4,44 @@ import { supabase } from '../utils/supabaseClient';
 
 export async function generatePDF(formElement) {
     try {
-        console.log('Iniciando generación de PDF optimizado...');
+        console.log('Iniciando generación de PDF...');
         await document.fonts.ready;
 
-        // Clonar el formulario
-        const formClone = formElement.cloneNode(true);
-
-        // Manejar específicamente el canvas de la firma
+        // Capturar la firma antes de clonar
         const originalSignature = formElement.querySelector('#signature-pad');
-        const clonedSignature = formClone.querySelector('#signature-pad');
-        
-        if (originalSignature && clonedSignature) {
-            // Copiar el contenido de la firma
-            const signatureContext = clonedSignature.getContext('2d');
-            signatureContext.drawImage(originalSignature, 0, 0);
-        }
+        const signatureDataUrl = originalSignature ? originalSignature.toDataURL() : null;
 
-        // Configurar el contenedor
-        const mainContainer = document.createElement('div');
-        Object.assign(mainContainer.style, {
-            position: 'absolute',
-            left: '-9999px',
-            top: '0',
-            width: '210mm',
-            background: 'white',
-            padding: '20px',
-            boxSizing: 'border-box'
-        });
+        // Dividir el contenido en secciones
+        const contentHeight = 1000; // Alto máximo por página en píxeles
+        const sections = [];
+        let currentSection = document.createElement('div');
+        let currentHeight = 0;
 
-        mainContainer.appendChild(formClone);
-        document.body.appendChild(mainContainer);
-
-        // Capturar el contenido
-        const canvas = await html2canvas(mainContainer, {
-            scale: 1.5, // Reducido para optimizar
-            useCORS: true,
-            logging: false,
-            width: mainContainer.offsetWidth,
-            height: mainContainer.offsetHeight,
-            imageTimeout: 0,
-            backgroundColor: 'white',
-            onclone: (clonedDoc) => {
-                // Asegurar que la firma se renderice correctamente
-                const signaturePad = clonedDoc.querySelector('#signature-pad');
-                if (signaturePad) {
-                    signaturePad.style.backgroundColor = 'white';
+        Array.from(formElement.children).forEach(child => {
+            const clone = child.cloneNode(true);
+            
+            // Si es el contenedor de firma, restaurar la firma
+            if (clone.querySelector('#signature-pad')) {
+                const clonedCanvas = clone.querySelector('#signature-pad');
+                if (signatureDataUrl) {
+                    const img = new Image();
+                    img.src = signatureDataUrl;
+                    img.onload = () => {
+                        const ctx = clonedCanvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                    };
                 }
             }
-        });
 
-        document.body.removeChild(mainContainer);
+            if (currentHeight + child.offsetHeight > contentHeight) {
+                sections.push(currentSection);
+                currentSection = document.createElement('div');
+                currentHeight = 0;
+            }
+            currentHeight += child.offsetHeight;
+            currentSection.appendChild(clone);
+        });
+        sections.push(currentSection);
 
         // Configurar el PDF
         const pdf = new jsPDF({
@@ -63,42 +51,72 @@ export async function generatePDF(formElement) {
             compress: true
         });
 
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const margin = 20; // Aumentado para mejor estética
+        // Procesar cada sección
+        for (let i = 0; i < sections.length; i++) {
+            const section = sections[i];
+            
+            // Contenedor temporal
+            const tempContainer = document.createElement('div');
+            Object.assign(tempContainer.style, {
+                position: 'absolute',
+                left: '-9999px',
+                top: '0',
+                width: '210mm',
+                background: 'white',
+                padding: '20mm 20mm' // Márgenes
+            });
+            
+            tempContainer.appendChild(section);
+            document.body.appendChild(tempContainer);
 
-        // Calcular dimensiones manteniendo proporción
-        const imgWidth = pageWidth - (margin * 2);
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            // Modificar la configuración de html2canvas
+            const canvas = await html2canvas(tempContainer, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: 'white',
+                onclone: (clonedDoc) => {
+                    const signaturePad = clonedDoc.querySelector('#signature-pad');
+                    if (signaturePad && signatureDataUrl) {
+                        const img = new Image();
+                        img.src = signatureDataUrl;
+                        const ctx = signaturePad.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                    }
+                }
+            });
 
-        // Dividir en páginas con mejor manejo de márgenes
-        let heightLeft = imgHeight;
-        let position = margin;
-        let page = 1;
+            // Optimizar y agregar al PDF
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 20;
 
-        // Optimizar calidad/tamaño de imagen
-        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+            if (i > 0) pdf.addPage();
 
-        // Primera página
-        pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
+            // Calcular dimensiones manteniendo proporción
+            const imgWidth = pageWidth - (margin * 2);
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Páginas adicionales con márgenes superiores
-        while (heightLeft > pageHeight - margin) {
-            pdf.addPage();
-            position = -(pageHeight * page) + (margin * 2); // Agregar margen superior
-            pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
-            heightLeft -= (pageHeight - margin * 2);
-            page++;
-
+            pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+            
             // Agregar número de página
             pdf.setFontSize(10);
-            pdf.text(`Página ${page}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            pdf.text(`Página ${i + 1} de ${sections.length}`, pageWidth / 2, pageHeight - 10, { 
+                align: 'center' 
+            });
+
+            document.body.removeChild(tempContainer);
         }
 
-        // Generar y subir el PDF
-        const pdfBlob = pdf.output('blob');
+        // Guardar localmente y subir a Supabase
         const fileName = `waiver_${Date.now()}.pdf`;
+        
+        // Descarga local
+        pdf.save(fileName);
 
+        // Subir a Supabase
+        const pdfBlob = pdf.output('blob');
         const { data, error } = await supabase.storage
             .from('pdfs')
             .upload(fileName, pdfBlob, {
@@ -112,8 +130,7 @@ export async function generatePDF(formElement) {
             .from('pdfs')
             .getPublicUrl(data.path);
 
-        console.log('PDF optimizado generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
-
+        console.log('PDF generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
         return publicUrl;
 
     } catch (error) {
