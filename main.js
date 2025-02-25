@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Enviar datos a Airtable
             console.log('Enviando datos a Airtable...');
-            await sendToAirtable(formData, pdfLink, signatureUrl);
+            await sendToAirtable(formData, pdfLink);
 
             // Enviar correo electrónico
             console.log('Intentando enviar correo electrónico...');

@@ -13,11 +13,7 @@ export async function sendToAirtable(formData, pdfLink, signatureUrl) {
                 'License': formData.get('License') ? Number(formData.get('License')) : '', // Enviar como número// Enviar como número
                 'Issuing State': formData.get('Issuing State')?.toString() || '',
                 'Address': formData.get('Address')?.toString() || '',
-                'PDF Link': pdfLink,
-                // La firma debe ser un array de objetos con URLs
-                'Signature': signatureUrl ? [{
-                    url: signatureUrl
-                }] : []
+                'PDF Link': pdfLink
             }
         };
 
