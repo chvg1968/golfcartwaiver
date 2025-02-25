@@ -115,20 +115,70 @@ export async function generatePDF(formElement) {
         // Subir a Supabase
         try {
             const pdfBlob = pdf.output('blob');
+            console.log('PDF blob created, size:', pdfBlob.size / 1024, 'KB');
+            
+            // Log Supabase client state
+            console.log('Supabase client available:', !!supabase);
+            
+            // Check if the bucket exists first
+            console.log('Checking available storage buckets...');
+            const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+            
+            if (bucketError) {
+                console.error('Error checking buckets:', bucketError);
+                throw bucketError;
+            }
+            
+            console.log('Available buckets:', buckets.map(b => b.name).join(', '));
+            
+            // Make sure 'pdfs' bucket exists
+            const pdfsBucket = buckets.find(bucket => bucket.name === 'pdfs');
+            
+            if (!pdfsBucket) {
+                console.error('The "pdfs" bucket does not exist in Supabase storage');
+                // Try to create the bucket if it doesn't exist
+                try {
+                    const { data: newBucket, error: createError } = await supabase.storage.createBucket('pdfs', {
+                        public: true
+                    });
+                    
+                    if (createError) {
+                        console.error('Failed to create pdfs bucket:', createError);
+                        return null;
+                    }
+                    
+                    console.log('Created new pdfs bucket:', newBucket);
+                } catch (bucketCreateError) {
+                    console.error('Error creating bucket:', bucketCreateError);
+                    return null;
+                }
+            }
+            
+            console.log('Uploading PDF to Supabase storage bucket "pdfs"...');
             const { data, error } = await supabase.storage
                 .from('pdfs')
                 .upload(fileName, pdfBlob, {
                     contentType: 'application/pdf',
-                    cacheControl: '3600'
+                    cacheControl: '3600',
+                    upsert: true
                 });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase upload error details:', error);
+                throw error;
+            }
 
-            const { data: { publicUrl } } = supabase.storage
+            console.log('PDF uploaded successfully, path:', data.path);
+            
+            // Get the public URL
+            const { data: urlData } = supabase.storage
                 .from('pdfs')
                 .getPublicUrl(data.path);
+            
+            const publicUrl = urlData.publicUrl;
 
-            console.log('PDF generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
+            console.log('PDF generated and uploaded. Size:', pdfBlob.size / 1024, 'KB');
+            console.log('Public URL:', publicUrl);
             return publicUrl;
         } catch (storageError) {
             console.error('Error al subir a Supabase:', storageError);

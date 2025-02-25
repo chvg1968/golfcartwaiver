@@ -7,8 +7,9 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
 // Debug information
 console.log('Supabase initialization:');
 console.log('URL defined:', Boolean(supabaseUrl));
-console.log('URL value:', supabaseUrl || 'empty');
+console.log('URL value:', supabaseUrl);
 console.log('Key defined:', Boolean(supabaseKey));
+console.log('Key length:', supabaseKey?.length || 0);
 
 // Validate URL format
 function isValidUrl(string) {
@@ -38,6 +39,15 @@ if (isValidUrl(supabaseUrl) && supabaseKey) {
       }
     );
     console.log('Supabase client initialized successfully');
+    
+    // Test the connection
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Supabase auth test failed:', error);
+      } else {
+        console.log('Supabase auth connection successful');
+      }
+    });
   } catch (error) {
     console.error('Failed to initialize Supabase client:', error);
   }
