@@ -63,7 +63,7 @@ export async function generatePDF(formElement) {
                 top: '0',
                 width: '210mm',
                 background: 'white',
-                padding: '20mm 20mm' // Márgenes
+                padding: '10mm 10mm' // Márgenes
             });
             
             tempContainer.appendChild(section);

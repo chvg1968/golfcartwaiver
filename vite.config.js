@@ -22,7 +22,6 @@ export default defineConfig({
                 rewrite: (path) => path.replace(/^\/email-api/, ''),
                 configure: (proxy, _options) => {
                     proxy.on('proxyReq', (proxyReq, req) => {
-                        // Asegurar que las cabeceras se envían correctamente
                         proxyReq.setHeader('Origin', 'https://api.resend.com');
                     });
                 }

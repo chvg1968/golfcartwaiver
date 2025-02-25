@@ -1,10 +1,10 @@
-import { supabase } from '@/utils/supabaseClient';
-import { generatePDF } from '@/services/pdfService';
-import { sendToAirtable } from '@/services/airtableService';
-import { sendEmail } from '@/services/emailService';
-import { authenticateUser } from '@/services/authService';
-import { SignatureComponent } from '@/components/signature';
-import { generateUUID, getInitials } from '@/utils/helpers';
+import { supabase } from './utils/supabaseClient';
+import { generatePDF } from './services/pdfService';
+import { sendToAirtable } from './services/airtableService';
+import { sendEmail } from './services/emailService';
+import { authenticateUser } from './services/authService';
+import { SignatureComponent } from './components/signature';
+import { generateUUID, getInitials } from './utils/helpers';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar el pad de firma

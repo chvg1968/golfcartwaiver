@@ -1,2 +1,11 @@
 [build]
-publish = "." # O la carpeta donde tengas tu index.html
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+NODE_ENV = "production"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,4 +1,4 @@
-import { RESEND_API_KEY } from '@config/env';
+import { RESEND_API_KEY } from '../config/env';
 
 export async function sendEmail(formData, pdfLink) {
     try {
