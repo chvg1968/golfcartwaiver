@@ -7,23 +7,14 @@ export default defineConfig({
             '/api': {
                 target: 'https://api.resend.com',
                 changeOrigin: true,
+                secure: process.env.NODE_ENV === 'production',
                 rewrite: (path) => path.replace(/^\/api/, ''),
-                secure: false,
                 configure: (proxy, _options) => {
-                    proxy.on('proxyReq', (proxyReq, req) => {
-                        console.log('Enviando solicitud:', req.method, req.url);
-                    });
-                }
-            },
-            '/email-api': {
-                target: 'https://api.resend.com',
-                changeOrigin: true,
-                secure: false,
-                rewrite: (path) => path.replace(/^\/email-api/, ''),
-                configure: (proxy, _options) => {
-                    proxy.on('proxyReq', (proxyReq, req) => {
-                        proxyReq.setHeader('Origin', 'https://api.resend.com');
-                    });
+                    if (process.env.NODE_ENV !== 'production') {
+                        proxy.on('proxyReq', (proxyReq, req) => {
+                            console.log('Enviando solicitud:', req.method, req.url);
+                        });
+                    }
                 }
             }
         }
@@ -32,6 +23,11 @@ export default defineConfig({
         outDir: 'dist',
         assetsDir: 'assets',
         sourcemap: false,
-        minify: true
-      }
+        minify: true,
+        rollupOptions: {
+            output: {
+                manualChunks: undefined
+            }
+        }
+    }
 });
