@@ -198,8 +198,9 @@ header {
 /* Agregar estas clases específicas para el PDF */
 @media print {
     body {
-        padding: 40px;
+        padding: 20px;
         max-width: none;
+        font-size: 12px;
     }
 
     header {
@@ -218,5 +219,36 @@ header {
 
     .title {
         margin-bottom: 40px;
+    }
+
+    /* Estilos específicos para PDF */
+    body {
+        font-size: 12px;
+        line-height: 1.3;
+    }
+    
+    .form-group {
+        margin: 3px 0;
+        page-break-inside: avoid;
+    }
+    
+    input, select, textarea {
+        margin: 2px 0;
+        font-size: 12px;
+    }
+    
+    .signature-container {
+        margin: 5px 0;
+        page-break-inside: avoid;
+    }
+
+    .title, .logo {
+        page-break-before: avoid;
+        page-break-after: avoid;
+    }
+
+    .group-container {
+        gap: 10px;
+        page-break-inside: avoid;
     }
 }
