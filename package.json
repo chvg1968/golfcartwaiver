@@ -1,7 +1,7 @@
 {
   "name": "golfcartwaiver",
   "version": "1.0.0",
-  "description": "Formulario de waiver para carrito de golf",
+  "description": "Golf Cart Waiter",
   "main": "index.html",
   "scripts": {
     "dev:client": "vite",
