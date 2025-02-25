@@ -7,7 +7,7 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
 // Debug information
 console.log('Supabase initialization:');
 console.log('URL defined:', Boolean(supabaseUrl));
-console.log('URL value:', supabaseUrl ? supabaseUrl.substring(0, 10) + '...' : 'empty');
+console.log('URL value:', supabaseUrl || 'empty');
 console.log('Key defined:', Boolean(supabaseKey));
 
 // Validate URL format
@@ -15,7 +15,8 @@ function isValidUrl(string) {
   try {
     new URL(string);
     return true;
-  } catch (_) {
+  } catch (error) {
+    console.error('URL validation error:', error.message, 'for URL:', string);
     return false;
   }
 }
@@ -43,7 +44,8 @@ if (isValidUrl(supabaseUrl) && supabaseKey) {
 } else {
   console.error('Invalid Supabase configuration:', { 
     urlValid: isValidUrl(supabaseUrl), 
-    keyValid: Boolean(supabaseKey) 
+    keyValid: Boolean(supabaseKey),
+    url: supabaseUrl || 'empty'
   });
 }
 

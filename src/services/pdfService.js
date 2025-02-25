@@ -43,15 +43,11 @@ export async function generatePDF(formElement) {
         });
         sections.push(currentSection);
 
-        // Configurar el PDF
-        const pdf = new jsPDF({
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait',
-            compress: true
-        });
+        // Create PDF
+        const pdf = new jsPDF();
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
 
-        // Procesar cada sección
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
             
@@ -75,6 +71,7 @@ export async function generatePDF(formElement) {
                 useCORS: true,
                 logging: false,
                 backgroundColor: 'white',
+                willReadFrequently: true, // Add this to address the Canvas2D warning
                 onclone: (clonedDoc) => {
                     const signaturePad = clonedDoc.querySelector('#signature-pad');
                     if (signaturePad && signatureDataUrl) {
@@ -86,22 +83,16 @@ export async function generatePDF(formElement) {
                 }
             });
 
-            // Optimizar y agregar al PDF
-            const imgData = canvas.toDataURL('image/jpeg', 0.95);
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 20;
+            // Add page if not the first one
+            if (i > 0) {
+                pdf.addPage();
+            }
 
-            if (i > 0) pdf.addPage();
-
-            // Calcular dimensiones manteniendo proporción
-            const imgWidth = pageWidth - (margin * 2);
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+            // Add the canvas to the PDF
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
             
-            // Agregar número de página
-            pdf.setFontSize(10);
+            // Add page number
             pdf.text(`Página ${i + 1} de ${sections.length}`, pageWidth / 2, pageHeight - 10, { 
                 align: 'center' 
             });
@@ -115,26 +106,36 @@ export async function generatePDF(formElement) {
         // Descarga local
         pdf.save(fileName);
 
+        // Check if Supabase is available before trying to use it
+        if (!supabase) {
+            console.warn('Supabase client not available. PDF will be saved locally only.');
+            return null;
+        }
+
         // Subir a Supabase
-        const pdfBlob = pdf.output('blob');
-        const { data, error } = await supabase.storage
-            .from('pdfs')
-            .upload(fileName, pdfBlob, {
-                contentType: 'application/pdf',
-                cacheControl: '3600'
-            });
+        try {
+            const pdfBlob = pdf.output('blob');
+            const { data, error } = await supabase.storage
+                .from('pdfs')
+                .upload(fileName, pdfBlob, {
+                    contentType: 'application/pdf',
+                    cacheControl: '3600'
+                });
 
-        if (error) throw error;
+            if (error) throw error;
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('pdfs')
-            .getPublicUrl(data.path);
+            const { data: { publicUrl } } = supabase.storage
+                .from('pdfs')
+                .getPublicUrl(data.path);
 
-        console.log('PDF generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
-        return publicUrl;
-
+            console.log('PDF generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
+            return publicUrl;
+        } catch (storageError) {
+            console.error('Error al subir a Supabase:', storageError);
+            return null;
+        }
     } catch (error) {
         console.error('Error en generación de PDF:', error);
-        throw new Error('Error al generar el PDF: ' + error.message);
+        throw error;
     }
 }
