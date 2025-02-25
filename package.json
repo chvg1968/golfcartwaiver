@@ -7,7 +7,7 @@
     "dev:client": "vite",
     "dev:server": "node server.js",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "build": "vite build",
+    "build": "node_modules/.bin/vite build",
     "serve": "vite preview"
   },
   "author": "",
