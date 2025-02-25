@@ -4,11 +4,28 @@ import path from 'path';
 export default defineConfig({
     server: {
         proxy: {
-            '/api/resend': {
+            '/api': {
                 target: 'https://api.resend.com',
                 changeOrigin: true,
-                rewrite: (path) => path.replace(/^\/api\/resend/, ''),
-                secure: false
+                rewrite: (path) => path.replace(/^\/api/, ''),
+                secure: false,
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, req) => {
+                        console.log('Enviando solicitud:', req.method, req.url);
+                    });
+                }
+            },
+            '/email-api': {
+                target: 'https://api.resend.com',
+                changeOrigin: true,
+                secure: false,
+                rewrite: (path) => path.replace(/^\/email-api/, ''),
+                configure: (proxy, _options) => {
+                    proxy.on('proxyReq', (proxyReq, req) => {
+                        // Asegurar que las cabeceras se envían correctamente
+                        proxyReq.setHeader('Origin', 'https://api.resend.com');
+                    });
+                }
             }
         }
     },
