@@ -146,7 +146,7 @@ header {
 /* Estilos para el canvas de firma */
 #signature-pad {
     width: 100%;
-    height: 200px;
+    height: 100px;
     border: 2px solid #ccc;
     border-radius: 4px;
     background-color: #fff;
@@ -175,6 +175,24 @@ header {
 /* Estilo cuando el canvas está en error */
 #signature-pad.error {
     border-color: #ff0000;
+}
+
+
+.group-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+} 
+
+.group-container > * {
+    line-height: 1.2; /* Reduce la altura de línea */
+    margin: 0; /* Asegura que no haya márgenes innecesarios */
+}
+
+.check-block {
+    display: grid;
+    grid-template-columns: 2fr 1fr ;
+    gap: 10px;
 }
 
 /* Agregar estas clases específicas para el PDF */

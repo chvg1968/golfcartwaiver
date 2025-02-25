@@ -72,22 +72,19 @@ document.addEventListener('DOMContentLoaded', function() {
             await sendToAirtable(formData, pdfLink, signatureUrl);
 
             // Enviar correo electrónico
-            console.log('Enviando correo electrónico...');
-            await sendEmail(formData, pdfLink);
-
+            console.log('Intentando enviar correo electrónico...');
+            const emailResult = await sendEmail(formData, pdfLink);
+            
             // Mostrar mensaje de éxito y limpiar formulario
-            alert('Formulario enviado correctamente');
+            alert('Formulario enviado correctamente' + 
+                  (!emailResult.success ? '\n(Nota: El email de confirmación no pudo ser enviado)' : ''));
+            
             this.reset();
-            signaturePad.clear();
+            signaturePad?.clear();
 
         } catch (error) {
-            console.error('Error detallado al procesar el formulario:', {
-                message: error.message,
-                stack: error.stack,
-                name: error.name,
-                originalError: error
-            });
-            alert(`Error al procesar el formulario: ${error.message}`);
+            console.error('Error detallado al procesar el formulario:', error);
+            alert(`Error: ${error.message}`);
         }
     });
 });

@@ -10,7 +10,7 @@ export async function sendToAirtable(formData, pdfLink, signatureUrl) {
                 'Form Id': formData.get('Form Id')?.toString() || '',
                 'Signature Date': formData.get('Signature Date') || new Date().toISOString().split('T')[0],
                 'Guest Name': formData.get('Guest Name')?.toString() || '',
-                'License': Number, // Enviar como número
+                'License': formData.get('License') ? Number(formData.get('License')) : '', // Enviar como número// Enviar como número
                 'Issuing State': formData.get('Issuing State')?.toString() || '',
                 'Address': formData.get('Address')?.toString() || '',
                 'PDF Link': pdfLink,

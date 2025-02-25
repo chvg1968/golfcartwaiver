@@ -7,47 +7,48 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <img class="logo" src="/assets/logo.png" alt="Logo de LUXE">
-    </header>
-    <div class="title">
-        <h1>★ GOLF CART LIABILITY WAIVER ★</h1>
-    </div>
 
     <form id="waiverForm">
+        <div class="title">
+            <img class="logo" src="/assets/logo.png" alt="Logo de LUXE" width="200" height="250">
+            <h1>★ GOLF CART LIABILITY WAIVER ★</h1>
+        </div>
         <div class="main-text">
             In exchange for the privilege to operate the golf cart assigned to my Luxe Properties PR LLC rental at Bahia Beach Resort community,  I hereby accept responsibility for my own negligence and the negligence of any operator of my assigned golf cart. I hereby agree to operate the golf cart in a safe manner, and adhere to all rules set forth by Bahia Beach Resort Community, and to ensure that anyone operating the golf cart with my consent does the same. I acknowledge that I am liable for all medical and legal claims that may arise from the use of the golf cart. <b>I voluntarily agree to accept the risks of using a golf cart and on behalf of myself, my personal representatives and my heirs hereby voluntarily release the Owner and Property manager of the Unit at Bahia Beach Resort Community, and its directors, officers, employees, and agents from any and all claims, actions, causes of actions, suits, judgments and demands for bodily injury, property damage, loss of life and/or loss of services, in law or equity, that may in any way or manner arise out of use of the golf cart.</b>
         </div>
 
-        <div class="checkbox-group">
-            <input type="checkbox" id="ageConfirmation" required>
-            <label for="ageConfirmation">I am at least 18 years of age and attached hereto is a copy of my valid driver's license. I assume all responsibility for anyone operating this golf cart at the Development.</label>
+        <div class="check-block">
+            <div class="checkbox-group">
+                <input type="checkbox" id="ageConfirmation" required>
+                <label for="ageConfirmation">I am at least 18 years of age and attached hereto is a copy of my valid driver's license. I assume all responsibility for anyone operating this golf cart at the Development.</label>
+            </div>
+
+            <div class="initial-field">
+                <label>INITIAL <span class="required">*</span></label>
+                <input title="Initial" type="text" maxlength="3" required>
+            </div>
         </div>
 
-        <div class="initial-field">
-            <label>INITIAL <span class="required">*</span></label>
-            <input title="Initial" type="text" maxlength="3" required>
+        <div class="check-block">
+            <div class="checkbox-group">
+                <input type="checkbox" id="ageConfirmation" required>
+                I acknowledge that anyone I permit to operate the golf cart shall be at least 16 years of age and be in possession of a valid driver's license.
+            </div>
+            <div class="initial-field">
+                <label>INITIAL <span class="required">*</span></label>
+                <input title="Initial" type="text" maxlength="3" required>
+            </div>
         </div>
 
-        <div class="checkbox-group">
-            <input type="checkbox" id="ageConfirmation" required>
-            I acknowledge that anyone I permit to operate the golf cart shall be at least 16 years of age and be in
-            possession of a valid driver's license.
-        </div>
-
-        <div class="initial-field">
-            <label>INITIAL <span class="required">*</span></label>
-            <input title="Initial" type="text" maxlength="3" required>
-        </div>
-
-        <div class="checkbox-group">
-            <input type="checkbox" id="ageConfirmation" required>
-            I acknowledge that there is a charge of $100 for lost car keys
-        </div>
-
-        <div class="initial-field">
-            <label>INITIAL <span class="required">*</span></label>
-            <input title="Initial" type="text" maxlength="3" required>
+        <div class="check-block">
+            <div class="checkbox-group">
+                <input type="checkbox" id="ageConfirmation" required>
+                I acknowledge that there is a charge of $100 for lost car keys.
+            </div>
+            <div class="initial-field">
+                <label>INITIAL <span class="required">*</span></label>
+                <input title="Initial" type="text" maxlength="3" required>
+            </div>
         </div>
 
         <div class="second-text">
@@ -61,37 +62,40 @@
             <input title="Initial" type="text" maxlength="3" required>
         </div>
 
-        <div class="signature-container">
-            <label for="signature-pad">Signature:<span class="required">*</span></label>
-            <canvas id="signature-pad"></canvas>
-            <button type="button" id="clear-signature">Clear Signature</button>
-        </div>
+        <div class="signature-group-container">
+            <div class="signature-container">
+                <label for="signature-pad">Signature:<span class="required">*</span></label>
+                <canvas id="signature-pad"></canvas>
+                <button type="button" id="clear-signature">Clear Signature</button>
+            </div>
+            
+            <div class="group-container">
+                <div class="form-group">
+                    <label>Signature Date<span class="required">*</span></label>
+                    <input title="date" type="date" name="Signature Date" required>
+                </div>
 
-        <div class="form-group">
-            <label>Signature Date<span class="required">*</span></label>
-            <input title="date" type="date" name="Signature Date" required>
-        </div>
+                <div class="form-group">
+                    <label>Guest Name<span class="required">*</span></label>
+                    <input title="Name" type="text" name="Guest Name" required>
+                </div>
 
-        <div class="form-group">
-            <label>Guest Name<span class="required">*</span></label>
-            <input title="Name" type="text" name="Guest Name" required>
-        </div>
+                <div class="form-group">
+                    <label>License<span class="required">*</span></label>
+                    <input title="License #" type="text" name="License" required>
+                </div>
 
-        <div class="form-group">
-            <label>License<span class="required">*</span></label>
-            <input title="License #" type="text" name="License" required>
-        </div>
+                <div class="form-group">
+                    <label>Issuing State<span class="required">*</span></label>
+                    <input title="Issuing State" type="text" name="Issuing State" required>
+                </div>
 
-        <div class="form-group">
-            <label>Issuing State<span class="required">*</span></label>
-            <input title="Issuing State" type="text" name="Issuing State" required>
+                <div class="form-group">
+                    <label>Address<span class="required">*</span></label>
+                    <input  title="Address" type="text" name="Address" required>
+                </div> 
+            </div>
         </div>
-
-        <div class="form-group">
-            <label>Address<span class="required">*</span></label>
-            <input  title="Address" type="text" name="Address" required>
-        </div>
-
        
 
         <button type="submit">Submit</button>
