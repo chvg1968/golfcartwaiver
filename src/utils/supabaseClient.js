@@ -4,12 +4,14 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
 
-// Debug information
+// More detailed debug information
 console.log('Supabase initialization:');
 console.log('URL defined:', Boolean(supabaseUrl));
 console.log('URL value:', supabaseUrl);
+console.log('URL starts with https:', supabaseUrl.startsWith('https://'));
 console.log('Key defined:', Boolean(supabaseKey));
 console.log('Key length:', supabaseKey?.length || 0);
+console.log('Key starts with eyJ:', supabaseKey.startsWith('eyJ'));
 
 // Validate URL format
 function isValidUrl(string) {
@@ -27,20 +29,24 @@ let supabase = null;
 
 if (isValidUrl(supabaseUrl) && supabaseKey) {
   try {
-    supabase = createClient(
-      supabaseUrl,
-      supabaseKey,
-      {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: false
+    // Create the Supabase client with explicit options
+    supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false
+      },
+      global: {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`
         }
       }
-    );
+    });
+    
     console.log('Supabase client initialized successfully');
     
-    // Test the connection
+    // Test the connection with a simple auth check
     supabase.auth.getSession().then(({ data, error }) => {
       if (error) {
         console.error('Supabase auth test failed:', error);
@@ -55,7 +61,7 @@ if (isValidUrl(supabaseUrl) && supabaseKey) {
   console.error('Invalid Supabase configuration:', { 
     urlValid: isValidUrl(supabaseUrl), 
     keyValid: Boolean(supabaseKey),
-    url: supabaseUrl || 'empty'
+    url: supabaseUrl ? 'provided but not shown' : 'empty'
   });
 }
 

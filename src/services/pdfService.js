@@ -120,63 +120,39 @@ export async function generatePDF(formElement) {
             // Log Supabase client state
             console.log('Supabase client available:', !!supabase);
             
-            // Check if the bucket exists first
-            console.log('Checking available storage buckets...');
-            const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
-            
-            if (bucketError) {
-                console.error('Error checking buckets:', bucketError);
-                throw bucketError;
+            if (!supabase) {
+                console.warn('Supabase client not available. PDF will be saved locally only.');
+                return null;
             }
             
-            console.log('Available buckets:', buckets.map(b => b.name).join(', '));
-            
-            // Make sure 'pdfs' bucket exists
-            const pdfsBucket = buckets.find(bucket => bucket.name === 'pdfs');
-            
-            if (!pdfsBucket) {
-                console.error('The "pdfs" bucket does not exist in Supabase storage');
-                // Try to create the bucket if it doesn't exist
-                try {
-                    const { data: newBucket, error: createError } = await supabase.storage.createBucket('pdfs', {
-                        public: true
-                    });
-                    
-                    if (createError) {
-                        console.error('Failed to create pdfs bucket:', createError);
-                        return null;
-                    }
-                    
-                    console.log('Created new pdfs bucket:', newBucket);
-                } catch (bucketCreateError) {
-                    console.error('Error creating bucket:', bucketCreateError);
-                    return null;
-                }
-            }
-            
+            // Simplified approach - try to upload directly
             console.log('Uploading PDF to Supabase storage bucket "pdfs"...');
-            const { data, error } = await supabase.storage
-                .from('pdfs')
-                .upload(fileName, pdfBlob, {
-                    contentType: 'application/pdf',
-                    cacheControl: '3600',
-                    upsert: true
-                });
-
-            if (error) {
-                console.error('Supabase upload error details:', error);
-                throw error;
+            
+            // Create FormData for the upload
+            const formData = new FormData();
+            formData.append('file', pdfBlob, fileName);
+            
+            // Manual fetch request to debug the issue
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/pdfs/${fileName}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('Manual upload failed:', errorData);
+                throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
             }
-
-            console.log('PDF uploaded successfully, path:', data.path);
+            
+            const data = await response.json();
+            console.log('PDF uploaded successfully, response:', data);
             
             // Get the public URL
-            const { data: urlData } = supabase.storage
-                .from('pdfs')
-                .getPublicUrl(data.path);
+            const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/pdfs/${fileName}`;
             
-            const publicUrl = urlData.publicUrl;
-
             console.log('PDF generated and uploaded. Size:', pdfBlob.size / 1024, 'KB');
             console.log('Public URL:', publicUrl);
             return publicUrl;
