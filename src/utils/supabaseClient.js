@@ -1,8 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Add fallback values or validation
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase environment variables');
+}
+
 export const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_KEY,
+    supabaseUrl,
+    supabaseKey,
     {
         auth: {
             autoRefreshToken: true,
