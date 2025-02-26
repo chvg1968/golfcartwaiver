@@ -1,42 +1,37 @@
-import { supabase, testBucketAccess } from './supabaseClient';
+import { supabase } from './supabaseClient';
 
 // Simple function to test Supabase connection
 export async function testSupabaseConnection() {
   console.log('Testing Supabase connection...');
   
   try {
-    // Test auth
-    console.log('Testing auth...');
-    const { data: authData, error: authError } = await supabase.auth.getSession();
-    
-    if (authError) {
-      console.error('Auth test failed:', authError);
-    } else {
-      console.log('Auth test successful:', authData ? 'Session exists' : 'No active session');
-    }
-    
     // Test storage
-    console.log('Testing storage...');
+    console.log('Testing storage access...');
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
     if (bucketsError) {
       console.error('Storage test failed:', bucketsError);
+      return { success: false, error: bucketsError };
     } else {
       console.log('Storage test successful. Buckets:', buckets);
+      
+      // Check if 'pdfs' bucket exists
+      const pdfsBucket = buckets.find(bucket => bucket.name === 'pdfs');
+      if (!pdfsBucket) {
+        console.error('The "pdfs" bucket does not exist!');
+        return { success: false, error: 'pdfs bucket not found' };
+      }
+      
+      console.log('Found "pdfs" bucket:', pdfsBucket);
+      return { success: true, buckets };
     }
-    
-    // Test bucket access
-    const bucketAccessOk = await testBucketAccess();
-    console.log('Bucket access test:', bucketAccessOk ? 'Passed' : 'Failed');
-    
-    return { success: !authError && !bucketsError && bucketAccessOk };
   } catch (error) {
     console.error('Supabase test failed with exception:', error);
     return { success: false, error };
   }
 }
 
-// Run the test when this module is imported
+// Run the test
 testSupabaseConnection().then(result => {
   console.log('Supabase connection test result:', result);
 });
