@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
-import { supabase } from '../utils/supabaseClient';
+import { supabase, uploadPDF } from '../utils/supabaseClient';
 
 export async function generatePDF(formElement) {
     try {
@@ -163,52 +163,32 @@ export async function generatePDF(formElement) {
             return null;
         }
 
-        // Subir a Supabase
+        // Subir a Supabase con mejor manejo de errores
         try {
-            const pdfBlob = compressedPdf; // Usar la versión comprimida
-            console.log('PDF blob created, size:', pdfBlob.size / 1024, 'KB');
-            
-            // Log Supabase client state
-            console.log('Supabase client available:', !!supabase);
-            
-            if (!supabase) {
-                console.warn('Supabase client not available. PDF will be saved locally only.');
-                return null;
-            }
-            
             console.log('Subiendo PDF a Supabase...');
-            
-            const { data, error } = await supabase.storage
-                .from('pdfs')
-                .upload(fileName, pdfBlob, {
-                    cacheControl: '3600',
-                    upsert: true,
-                    contentType: 'application/pdf'
-                });
-            
-            if (error) {
-                console.error('Error al subir PDF a Supabase:', error);
-                return null;
-            }
-            
-            console.log('PDF subido correctamente:', data);
-            
-            // Obtener la URL pública
-            const { data: publicUrlData } = supabase.storage
-                .from('pdfs')
-                .getPublicUrl(fileName);
-            
-            const publicUrl = publicUrlData.publicUrl;
-            
-            console.log('PDF generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
-            console.log('URL pública:', publicUrl);
+            const fileName = `waiver_${Date.now()}.pdf`;
+            const publicUrl = await uploadPDF(fileName, compressedPdf);
+            console.log('PDF subido exitosamente:', publicUrl);
             return publicUrl;
-        } catch (storageError) {
-            console.error('Error al subir a Supabase:', storageError);
+
+        } catch (error) {
+            console.error('Error inesperado al subir PDF:', error);
             return null;
         }
     } catch (error) {
         console.error('Error en generación de PDF:', error);
+        throw error;
+    }
+}
+
+// Ejemplo de uso
+async function handlePDFUpload(pdfBlob) {
+    try {
+        const fileName = `waiver_${Date.now()}.pdf`;
+        const publicUrl = await uploadPDF(fileName, pdfBlob);
+        return publicUrl;
+    } catch (error) {
+        console.error('Error en la subida del PDF:', error);
         throw error;
     }
 }

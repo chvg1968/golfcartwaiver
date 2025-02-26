@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import path from 'path';
 
 export default defineConfig({
     server: {
@@ -7,14 +6,13 @@ export default defineConfig({
             '/api': {
                 target: 'https://api.resend.com',
                 changeOrigin: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: true,  // Cambiado a true para producción
                 rewrite: (path) => path.replace(/^\/api/, ''),
                 configure: (proxy, _options) => {
-                    if (process.env.NODE_ENV !== 'production') {
-                        proxy.on('proxyReq', (proxyReq, req) => {
-                            console.log('Enviando solicitud:', req.method, req.url);
-                        });
-                    }
+                    proxy.on('proxyReq', (proxyReq) => {
+                        proxyReq.setHeader('Origin', 'https://api.resend.com');
+                        proxyReq.setHeader('Authorization', `Bearer ${process.env.VITE_RESEND_API_KEY}`);
+                    });
                 }
             }
         }

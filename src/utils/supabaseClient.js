@@ -1,68 +1,70 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Add proper validation and fallbacks for Supabase URL and key
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || '';
+// Obtener variables de entorno
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
-// More detailed debug information
-console.log('Supabase initialization:');
-console.log('URL defined:', Boolean(supabaseUrl));
-console.log('URL value:', supabaseUrl);
-console.log('URL starts with https:', supabaseUrl.startsWith('https://'));
-console.log('Key defined:', Boolean(supabaseKey));
-console.log('Key length:', supabaseKey?.length || 0);
-console.log('Key starts with eyJ:', supabaseKey.startsWith('eyJ'));
-
-// Validate URL format
-function isValidUrl(string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (error) {
-    console.error('URL validation error:', error.message, 'for URL:', string);
-    return false;
-  }
+// Validar configuración
+if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Variables de entorno de Supabase no configuradas');
 }
 
-// Initialize Supabase client only if valid URL and key are available
-let supabase = null;
+// Crear cliente de Supabase con configuración optimizada
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+        persistSession: false
+    },
+    storage: {
+        maxRetryAttempts: 3,
+        retryInterval: 1000
+    }
+});
 
-if (isValidUrl(supabaseUrl) && supabaseKey) {
-  try {
-    // Create the Supabase client with explicit options
-    supabase = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false
-      },
-      global: {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`
+// Función helper para subir PDFs
+export async function uploadPDF(fileName, pdfBlob) {
+    try {
+        console.log('Iniciando subida a Supabase...', fileName);
+        
+        // Verificar si el archivo ya existe
+        const { data: existingFile } = await supabase.storage
+            .from('pdfs')
+            .list('', {
+                search: fileName
+            });
+
+        if (existingFile?.length > 0) {
+            console.log('El archivo ya existe, actualizando...');
         }
-      }
-    });
-    
-    console.log('Supabase client initialized successfully');
-    
-    // Test the connection with a simple auth check
-    supabase.auth.getSession().then(({ data, error }) => {
-      if (error) {
-        console.error('Supabase auth test failed:', error);
-      } else {
-        console.log('Supabase auth connection successful');
-      }
-    });
-  } catch (error) {
-    console.error('Failed to initialize Supabase client:', error);
-  }
-} else {
-  console.error('Invalid Supabase configuration:', { 
-    urlValid: isValidUrl(supabaseUrl), 
-    keyValid: Boolean(supabaseKey),
-    url: supabaseUrl ? 'provided but not shown' : 'empty'
-  });
+
+        // Subir archivo
+        const { data, error } = await supabase.storage
+            .from('pdfs')
+            .upload(fileName, pdfBlob, {
+                contentType: 'application/pdf',
+                cacheControl: '3600',
+                upsert: true
+            });
+
+        if (error) {
+            console.error('Error de subida:', error);
+            throw error;
+        }
+
+        // Obtener URL pública
+        const { data: { publicUrl } } = supabase.storage
+            .from('pdfs')
+            .getPublicUrl(fileName);
+
+        console.log('PDF subido exitosamente:', publicUrl);
+        return publicUrl;
+
+    } catch (error) {
+        console.error('Error en uploadPDF:', error);
+        throw error;
+    }
 }
 
-export { supabase };
+
+
+
+
