@@ -1,14 +1,6 @@
 export async function sendEmail(formData, pdfLink) {
-    console.log('Iniciando envío de email...');
-    
     try {
-        // Verificar si el pdfLink es un blob URL y manejarlo adecuadamente
-        if (pdfLink && pdfLink.startsWith('blob:')) {
-            console.log('Detectado blob URL, se enviará como referencia');
-            // Opcionalmente, podrías convertir el blob a base64 y adjuntarlo
-            // Por ahora, solo notificamos que es un enlace local
-            pdfLink = 'PDF generado localmente (no disponible para visualización remota)';
-        }
+        console.log('Iniciando envío de email...');
         
         // Preparar datos para enviar a la función serverless
         const emailPayload = {
@@ -23,8 +15,7 @@ export async function sendEmail(formData, pdfLink) {
         };
         
         console.log('Enviando datos al servidor:', emailPayload);
-        
-        // Usar la función serverless para enviar el email
+
         const response = await fetch('/.netlify/functions/send-email', {
             method: 'POST',
             headers: {
@@ -32,28 +23,18 @@ export async function sendEmail(formData, pdfLink) {
             },
             body: JSON.stringify(emailPayload)
         });
-        
-        const responseData = await response.json();
-        
+
         if (!response.ok) {
-            console.error('Error en respuesta del servidor:', responseData);
-            return {
-                success: false,
-                error: responseData.error || 'Error desconocido del servidor'
-            };
+            const errorData = await response.json();
+            throw new Error(`Error al enviar email: ${response.status} - ${errorData.error}`);
         }
-        
-        console.log('Email enviado exitosamente:', responseData);
-        return {
-            success: true,
-            data: responseData.data
-        };
-        
+
+        const data = await response.json();
+        console.log('Email enviado exitosamente:', data);
+        return { success: true, data };
+
     } catch (error) {
-        console.error('Detailed error sending email:', error);
-        return {
-            success: false,
-            error: `Error al enviar email: ${error.message || error}`
-        };
+        console.error('Error detallado al enviar email:', error);
+        return { success: false, error: error.message };
     }
 }

@@ -1,7 +1,6 @@
 const { Resend } = require('resend');
 
 exports.handler = async function(event, context) {
-  // Solo permitir método POST
   if (event.httpMethod !== 'POST') {
     return { 
       statusCode: 405, 
@@ -10,7 +9,6 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    // Parsear el cuerpo de la solicitud
     const { formData, pdfLink } = JSON.parse(event.body);
     
     if (!formData || !pdfLink) {
@@ -23,17 +21,13 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Log para depuración
     console.log('Datos recibidos en la función:', { formData, pdfLink });
     console.log('API Key disponible:', !!process.env.RESEND_API_KEY);
 
-    // Inicializar Resend con la clave API
     const resend = new Resend(process.env.RESEND_API_KEY);
     
-    // Dirección de correo para pruebas
     const TEST_EMAIL = process.env.TEST_EMAIL || 'conradovilla@gmail.com';
 
-    // Preparar datos del correo
     const emailData = {
       from: 'Golf Cart Waiver <onboarding@resend.dev>',
       to: TEST_EMAIL,
@@ -55,7 +49,6 @@ exports.handler = async function(event, context) {
 
     console.log('Intentando enviar email con datos:', emailData);
 
-    // Enviar el correo
     const { data, error } = await resend.emails.send(emailData);
 
     if (error) {
@@ -69,7 +62,6 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Respuesta exitosa
     return {
       statusCode: 200,
       body: JSON.stringify({

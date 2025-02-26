@@ -159,23 +159,19 @@ export async function generatePDF(formElement) {
 
         // Subir a Supabase usando la función helper mejorada
         try {
-            console.log('Subiendo PDF a Supabase...');
+            const fileName = `waiver_${Date.now()}.pdf`;
             const publicUrl = await uploadPDF(fileName, compressedPdf);
             
             if (publicUrl) {
                 console.log('PDF subido exitosamente:', publicUrl);
                 return publicUrl;
             } else {
-                console.log('No se pudo subir el PDF a Supabase, continuando con flujo local');
-                // Crear una URL local para el PDF (solo durará durante la sesión)
-                const localUrl = URL.createObjectURL(compressedPdf);
-                return localUrl;
+                console.log('No se pudo subir el PDF a Supabase');
+                return null;
             }
         } catch (uploadError) {
             console.error('Error inesperado al subir PDF:', uploadError);
-            // Crear una URL local para el PDF (solo durará durante la sesión)
-            const localUrl = URL.createObjectURL(compressedPdf);
-            return localUrl;
+            return null;
         }
     } catch (error) {
         console.error('Error en generación de PDF:', error);

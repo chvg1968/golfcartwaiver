@@ -1,4 +1,3 @@
-
 import { generatePDF } from './services/pdfService';
 import { sendToAirtable } from './services/airtableService';
 import { sendEmail } from './services/emailService';
@@ -54,41 +53,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(`Error al generar el PDF: ${error.message}`);
             });
 
-            // Create signature file regardless of PDF upload success
-            const signatureData = signaturePad.toDataURL();
-            const signatureBlob = await (await fetch(signatureData)).blob();
-            const signatureFile = new File([signatureBlob], 'signature.png', { type: 'image/png' });
-            const signatureUrl = URL.createObjectURL(signatureFile);
-
-            // If PDF link is not available, we can still proceed with local PDF
             if (!pdfLink) {
-                console.warn('No se pudo obtener el enlace del PDF en la nube, pero se ha generado localmente');
-                // Continue with form submission without the PDF link
-            } else {
-                console.log('PDF generado exitosamente:', pdfLink);
+                throw new Error('No se pudo obtener el enlace del PDF');
             }
 
-            try {
-                // Enviar datos a Airtable
-                console.log('Enviando datos a Airtable...');
-                await sendToAirtable(formData, pdfLink || 'PDF no disponible en la nube');
-            } catch (airtableError) {
-                console.error('Error al enviar a Airtable:', airtableError);
-                // Continue execution even if Airtable fails
-            }
+            console.log('PDF generado exitosamente:', pdfLink);
 
-            try {
-                // Enviar correo electrónico
-                console.log('Intentando enviar correo electrónico...');
-                const emailResult = await sendEmail(formData, pdfLink || 'PDF no disponible en la nube');
-                
-                // Mostrar mensaje de éxito y limpiar formulario
-                alert('Formulario enviado correctamente' + 
-                      (!emailResult.success ? '\n(Nota: El email de confirmación no pudo ser enviado)' : ''));
-            } catch (emailError) {
-                console.error('Error al enviar email:', emailError);
-                alert('Formulario procesado, pero no se pudo enviar el email de confirmación');
-            }
+            // Enviar datos a Airtable
+            console.log('Enviando datos a Airtable...');
+            await sendToAirtable(formData, pdfLink);
+
+            // Enviar correo electrónico
+            console.log('Intentando enviar correo electrónico...');
+            const emailResult = await sendEmail(formData, pdfLink);
+            
+            // Mostrar mensaje de éxito y limpiar formulario
+            alert('Formulario enviado correctamente' + 
+                  (!emailResult.success ? '\n(Nota: El email de confirmación no pudo ser enviado)' : ''));
             
             this.reset();
             signaturePad?.clear();
