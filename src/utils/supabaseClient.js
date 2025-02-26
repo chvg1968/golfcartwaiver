@@ -3,24 +3,20 @@ import { createClient } from '@supabase/supabase-js';
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_KEY,
+    import.meta.env.VITE_SUPABASE_ANON_KEY, // Make sure this is the anon/public key, not the service_role key
     {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
+            storageKey: 'supabase-auth', // Explicitly set storage key
         },
         global: {
             fetch: (...args) => fetch(...args),
-            headers: { 'X-Client-Info': 'supabase-js/2.x' },
         },
-        realtime: {
-            timeout: 30000,
-            retryInterval: 1000
-        }
     }
 );
 
-// Función helper para subir PDFs con mejor manejo de errores
+// Función helper para subir PDFs con mejor manejo de errores y autenticación
 export async function uploadPDF(fileName, pdfBlob) {
     try {
         console.log('Iniciando subida a Supabase...', fileName);
@@ -31,7 +27,17 @@ export async function uploadPDF(fileName, pdfBlob) {
             throw new Error('Cliente de Supabase no inicializado');
         }
         
-        // Subir archivo directamente sin verificar existencia previa de buckets
+        // Verificar si el usuario está autenticado
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+            console.log('Usuario no autenticado, intentando subir como anónimo...');
+            // Si no hay sesión, podemos intentar usar políticas de acceso público si están configuradas
+        } else {
+            console.log('Usuario autenticado:', session.user.email);
+        }
+        
+        // Subir archivo
         console.log('Subiendo archivo a Supabase...');
         const { data, error } = await supabase.storage
             .from('pdfs')
@@ -58,7 +64,10 @@ export async function uploadPDF(fileName, pdfBlob) {
 
     } catch (error) {
         console.error('Error en uploadPDF:', error);
-        throw error;
+        
+        // Manejar el caso en que no se pueda subir el archivo
+        // pero aún queremos continuar con el flujo de la aplicación
+        return null;
     }
 }
 
