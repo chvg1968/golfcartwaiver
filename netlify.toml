@@ -14,4 +14,13 @@
   NODE_ENV = "production"
 
 [[redirects]]
-status = 200  to = "/index.html"  from = "/*"
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+
+
+
+
+
+
