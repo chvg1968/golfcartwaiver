@@ -157,22 +157,16 @@ export async function generatePDF(formElement) {
         
         console.log('PDF generado localmente, tamaño:', compressedPdf.size / 1024, 'KB');
 
-        // Check if Supabase is available before trying to use it
-        if (!supabase) {
-            console.warn('Supabase client not available. PDF will be saved locally only.');
-            return null;
-        }
-
-        // Subir a Supabase con mejor manejo de errores
+        // Subir a Supabase usando la función helper mejorada
         try {
             console.log('Subiendo PDF a Supabase...');
-            const fileName = `waiver_${Date.now()}.pdf`;
             const publicUrl = await uploadPDF(fileName, compressedPdf);
             console.log('PDF subido exitosamente:', publicUrl);
             return publicUrl;
-
-        } catch (error) {
-            console.error('Error inesperado al subir PDF:', error);
+        } catch (uploadError) {
+            console.error('Error inesperado al subir PDF:', uploadError);
+            // Aún retornamos null para que la aplicación pueda continuar
+            // ya que el PDF se guardó localmente
             return null;
         }
     } catch (error) {
