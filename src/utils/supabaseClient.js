@@ -32,7 +32,19 @@ export async function uploadPDF(fileName, pdfBlob) {
         
         if (!session) {
             console.log('Usuario no autenticado, intentando subir como anónimo...');
-            // Si no hay sesión, podemos intentar usar políticas de acceso público si están configuradas
+            
+            // Para subidas anónimas, podemos intentar autenticar con un usuario anónimo
+            // Solo si está habilitado en tu proyecto de Supabase
+            try {
+                const { error: signInError } = await supabase.auth.signInAnonymously();
+                if (signInError) {
+                    console.error('Error al autenticar anónimamente:', signInError);
+                } else {
+                    console.log('Autenticación anónima exitosa');
+                }
+            } catch (authError) {
+                console.error('Error en autenticación anónima:', authError);
+            }
         } else {
             console.log('Usuario autenticado:', session.user.email);
         }
@@ -41,7 +53,7 @@ export async function uploadPDF(fileName, pdfBlob) {
         console.log('Subiendo archivo a Supabase...');
         const { data, error } = await supabase.storage
             .from('pdfs')
-            .upload(fileName, pdfBlob, {
+            .upload(`public/${fileName}`, pdfBlob, {  // Añadido prefijo 'public/'
                 contentType: 'application/pdf',
                 cacheControl: '3600',
                 upsert: true
@@ -57,16 +69,13 @@ export async function uploadPDF(fileName, pdfBlob) {
         // Obtener URL pública
         const { data: publicUrlData } = supabase.storage
             .from('pdfs')
-            .getPublicUrl(fileName);
+            .getPublicUrl(`public/${fileName}`);  // Usar el mismo path con prefijo
             
         console.log('URL pública generada:', publicUrlData);
         return publicUrlData.publicUrl;
 
     } catch (error) {
         console.error('Error en uploadPDF:', error);
-        
-        // Manejar el caso en que no se pueda subir el archivo
-        // pero aún queremos continuar con el flujo de la aplicación
         return null;
     }
 }
