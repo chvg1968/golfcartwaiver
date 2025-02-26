@@ -1,7 +1,3 @@
-/**
- * Servicio para enviar correos electrónicos usando Resend
- */
-
 export async function sendEmail(formData, pdfLink) {
     console.log('Iniciando envío de email...');
     
