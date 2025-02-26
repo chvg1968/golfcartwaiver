@@ -1,72 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Use the correct environment variable names that match your .env file
+// Usa las variables de entorno correctas
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabaseEmail = import.meta.env.VITE_SUPABASE_EMAIL;
-const supabasePassword = import.meta.env.VITE_SUPABASE_PASSWORD;
 
-console.log('Supabase configuration:', { 
+// Información de depuración
+console.log('Configuración de Supabase:', { 
     urlExists: !!supabaseUrl, 
     keyExists: !!supabaseKey,
-    emailExists: !!supabaseEmail,
-    passwordExists: !!supabasePassword
+    url: supabaseUrl // Muestra la URL para verificar que sea correcta
 });
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase environment variables not set:', { 
-        url: !!supabaseUrl, 
-        key: !!supabaseKey 
-    });
+    console.error('Variables de entorno de Supabase no configuradas');
     throw new Error('Variables de entorno de Supabase no configuradas');
 }
 
-// Create the Supabase client with minimal configuration
+// Crea el cliente de Supabase
 export const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Test the connection
-supabase.auth.getSession().then(({ data, error }) => {
-    if (error) {
-        console.error('Supabase connection test failed:', error);
-    } else {
-        console.log('Supabase connection successful:', data ? 'Session exists' : 'No active session');
-    }
-});
-
-// Authenticate with Supabase if credentials are available
-let authInitialized = false;
-async function initializeAuth() {
-    if (authInitialized) return;
-    
-    if (supabaseEmail && supabasePassword) {
-        try {
-            console.log('Attempting to authenticate with Supabase...');
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: supabaseEmail,
-                password: supabasePassword,
-            });
-            
-            if (error) {
-                console.error('Error authenticating with Supabase:', error);
-            } else {
-                console.log('Successfully authenticated with Supabase:', data);
-                authInitialized = true;
-            }
-        } catch (err) {
-            console.error('Exception during Supabase authentication:', err);
-        }
-    } else {
-        console.log('No Supabase credentials available for authentication');
-    }
-}
 
 // Función helper para subir PDFs con mejor manejo de errores
 export async function uploadPDF(fileName, pdfBlob) {
     try {
         console.log('Subiendo archivo a Supabase...', fileName);
-        
-        // Ensure we're authenticated before uploading
-        await initializeAuth();
         
         // Verificar que el blob sea válido
         if (!pdfBlob || !(pdfBlob instanceof Blob)) {
@@ -78,12 +34,14 @@ export async function uploadPDF(fileName, pdfBlob) {
             throw new Error('El archivo PDF excede el tamaño máximo permitido (5MB)');
         }
         
-        console.log('Attempting to upload file to Supabase bucket "pdfs"...');
+        // Usar la carpeta "public" dentro del bucket "pdfs"
+        const filePath = `public/${fileName}`;
+        console.log(`Intentando subir archivo a Supabase bucket "pdfs" en la ruta: ${filePath}`);
         
         // Subir el archivo con los headers correctos
         const { data, error } = await supabase.storage
             .from('pdfs')
-            .upload(fileName, pdfBlob, {
+            .upload(filePath, pdfBlob, {
                 contentType: 'application/pdf',
                 cacheControl: '3600',
                 upsert: true
@@ -94,12 +52,12 @@ export async function uploadPDF(fileName, pdfBlob) {
             throw new Error(`Error al subir el archivo: ${error.message}`);
         }
 
-        console.log('File uploaded successfully:', data);
+        console.log('Archivo subido exitosamente:', data);
 
         // Obtener la URL pública
         const { data: publicUrlData } = supabase.storage
             .from('pdfs')
-            .getPublicUrl(fileName);
+            .getPublicUrl(filePath);
             
         console.log('URL pública generada:', publicUrlData);
         return publicUrlData.publicUrl;
@@ -110,30 +68,42 @@ export async function uploadPDF(fileName, pdfBlob) {
     }
 }
 
-// Add a test function to check bucket access
+// Función para probar el acceso al bucket
 export async function testBucketAccess() {
     try {
-        console.log('Testing bucket access...');
+        console.log('Probando acceso al bucket...');
         const { data, error } = await supabase.storage.listBuckets();
         
         if (error) {
-            console.error('Error listing buckets:', error);
+            console.error('Error al listar buckets:', error);
             return false;
         }
         
-        console.log('Available buckets:', data);
+        console.log('Buckets disponibles:', data);
         
-        // Check if 'pdfs' bucket exists
+        // Verificar si existe el bucket 'pdfs'
         const pdfsBucket = data.find(bucket => bucket.name === 'pdfs');
         if (!pdfsBucket) {
-            console.error('The "pdfs" bucket does not exist!');
+            console.error('El bucket "pdfs" no existe!');
             return false;
         }
         
-        console.log('Found "pdfs" bucket:', pdfsBucket);
+        console.log('Bucket "pdfs" encontrado:', pdfsBucket);
+        
+        // Listar archivos en la carpeta public
+        const { data: files, error: filesError } = await supabase.storage
+            .from('pdfs')
+            .list('public');
+            
+        if (filesError) {
+            console.error('Error al listar archivos en la carpeta public:', filesError);
+        } else {
+            console.log('Archivos en la carpeta public:', files);
+        }
+        
         return true;
     } catch (error) {
-        console.error('Exception testing bucket access:', error);
+        console.error('Excepción al probar acceso al bucket:', error);
         return false;
     }
 }

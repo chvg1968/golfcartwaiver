@@ -1,37 +1,66 @@
 import { supabase } from './supabaseClient';
 
-// Simple function to test Supabase connection
+// Función para probar la conexión a Supabase
 export async function testSupabaseConnection() {
-  console.log('Testing Supabase connection...');
+  console.log('Probando conexión a Supabase...');
+  console.log('URL:', import.meta.env.VITE_SUPABASE_URL);
+  console.log('Key exists:', !!import.meta.env.VITE_SUPABASE_KEY);
   
   try {
-    // Test storage
-    console.log('Testing storage access...');
+    // Probar acceso al storage
+    console.log('Probando acceso al storage...');
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
     if (bucketsError) {
-      console.error('Storage test failed:', bucketsError);
+      console.error('Prueba de storage fallida:', bucketsError);
       return { success: false, error: bucketsError };
     } else {
-      console.log('Storage test successful. Buckets:', buckets);
+      console.log('Prueba de storage exitosa. Buckets:', buckets);
       
-      // Check if 'pdfs' bucket exists
+      // Verificar si existe el bucket 'pdfs'
       const pdfsBucket = buckets.find(bucket => bucket.name === 'pdfs');
       if (!pdfsBucket) {
-        console.error('The "pdfs" bucket does not exist!');
-        return { success: false, error: 'pdfs bucket not found' };
+        console.error('El bucket "pdfs" no existe!');
+        return { success: false, error: 'bucket pdfs no encontrado' };
       }
       
-      console.log('Found "pdfs" bucket:', pdfsBucket);
-      return { success: true, buckets };
+      console.log('Bucket "pdfs" encontrado:', pdfsBucket);
+      
+      // Listar archivos en la carpeta public
+      const { data: files, error: filesError } = await supabase.storage
+        .from('pdfs')
+        .list('public');
+        
+      if (filesError) {
+        console.error('Error al listar archivos en la carpeta public:', filesError);
+      } else {
+        console.log('Archivos en la carpeta public:', files);
+      }
+      
+      // Probar subir un archivo pequeño de prueba
+      const testBlob = new Blob(['Test file content'], { type: 'text/plain' });
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('pdfs')
+        .upload('public/test-file.txt', testBlob, {
+          contentType: 'text/plain',
+          upsert: true
+        });
+        
+      if (uploadError) {
+        console.error('Error al subir archivo de prueba:', uploadError);
+        return { success: false, error: uploadError };
+      }
+      
+      console.log('Archivo de prueba subido exitosamente:', uploadData);
+      return { success: true, buckets, files };
     }
   } catch (error) {
-    console.error('Supabase test failed with exception:', error);
+    console.error('Prueba de Supabase fallida con excepción:', error);
     return { success: false, error };
   }
 }
 
-// Run the test
+// Ejecutar la prueba
 testSupabaseConnection().then(result => {
-  console.log('Supabase connection test result:', result);
+  console.log('Resultado de prueba de conexión a Supabase:', result);
 });
