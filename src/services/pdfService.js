@@ -48,6 +48,36 @@ export async function generatePDF(formElement) {
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
+        // Configuración optimizada para html2canvas
+        const html2canvasOptions = {
+            scale: 1.5, // Reducido de 2 a 1.5 para disminuir el tamaño
+            useCORS: true,
+            logging: false,
+            backgroundColor: 'white',
+            willReadFrequently: true,
+            imageTimeout: 0, // Sin límite de tiempo para cargar imágenes
+            // Reducir calidad de las imágenes
+            onclone: (clonedDoc) => {
+                // Optimizar imágenes en el documento clonado
+                const images = clonedDoc.querySelectorAll('img');
+                images.forEach(img => {
+                    // Reducir calidad de las imágenes si no son la firma
+                    if (!img.closest('.signature-container')) {
+                        img.style.imageRendering = 'auto';
+                    }
+                });
+                
+                // Manejar la firma
+                const signaturePad = clonedDoc.querySelector('#signature-pad');
+                if (signaturePad && signatureDataUrl) {
+                    const img = new Image();
+                    img.src = signatureDataUrl;
+                    const ctx = signaturePad.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                }
+            }
+        };
+
         for (let i = 0; i < sections.length; i++) {
             const section = sections[i];
             
@@ -65,35 +95,23 @@ export async function generatePDF(formElement) {
             tempContainer.appendChild(section);
             document.body.appendChild(tempContainer);
 
-            // Modificar la configuración de html2canvas
-            const canvas = await html2canvas(tempContainer, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: 'white',
-                willReadFrequently: true, // Add this to address the Canvas2D warning
-                onclone: (clonedDoc) => {
-                    const signaturePad = clonedDoc.querySelector('#signature-pad');
-                    if (signaturePad && signatureDataUrl) {
-                        const img = new Image();
-                        img.src = signatureDataUrl;
-                        const ctx = signaturePad.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                    }
-                }
-            });
+            // Renderizar a canvas con configuración optimizada
+            const canvas = await html2canvas(tempContainer, html2canvasOptions);
 
             // Add page if not the first one
             if (i > 0) {
                 pdf.addPage();
             }
 
-            // Add the canvas to the PDF
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight);
+            // Optimizar la calidad de la imagen al convertir el canvas a imagen
+            const imgData = canvas.toDataURL('image/jpeg', 0.7); // Usar JPEG en lugar de PNG y reducir calidad a 70%
+            
+            // Añadir la imagen al PDF
+            pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight, null, 'FAST');
             
             // Add page number
-            pdf.text(`Página ${i + 1} de ${sections.length}`, pageWidth / 2, pageHeight - 10, { 
+            pdf.setFontSize(8); // Reducir tamaño de fuente para números de página
+            pdf.text(`Página ${i + 1} de ${sections.length}`, pageWidth / 2, pageHeight - 5, { 
                 align: 'center' 
             });
 
@@ -102,6 +120,12 @@ export async function generatePDF(formElement) {
 
         // Guardar localmente y subir a Supabase
         const fileName = `waiver_${Date.now()}.pdf`;
+        
+        // Comprimir el PDF antes de guardarlo
+        const compressedPdf = pdf.output('blob', {
+            compress: true,
+            compressPdf: true
+        });
         
         // Descarga local
         pdf.save(fileName);
@@ -114,7 +138,7 @@ export async function generatePDF(formElement) {
 
         // Subir a Supabase
         try {
-            const pdfBlob = pdf.output('blob');
+            const pdfBlob = compressedPdf; // Usar la versión comprimida
             console.log('PDF blob created, size:', pdfBlob.size / 1024, 'KB');
             
             // Log Supabase client state
@@ -125,36 +149,61 @@ export async function generatePDF(formElement) {
                 return null;
             }
             
-            // Simplified approach - try to upload directly
-            console.log('Uploading PDF to Supabase storage bucket "pdfs"...');
+            console.log('Subiendo PDF a Supabase usando el cliente oficial...');
             
-            // Create FormData for the upload
-            const formData = new FormData();
-            formData.append('file', pdfBlob, fileName);
+            // Verificar si el bucket existe
+            const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
             
-            // Manual fetch request to debug the issue
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/pdfs/${fileName}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_KEY}`
-                },
-                body: formData
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Manual upload failed:', errorData);
-                throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+            if (bucketsError) {
+                console.error('Error al listar buckets:', bucketsError);
+                throw new Error(`Error al verificar buckets: ${bucketsError.message}`);
             }
             
-            const data = await response.json();
-            console.log('PDF uploaded successfully, response:', data);
+            console.log('Buckets disponibles:', buckets.map(b => b.name));
             
-            // Get the public URL
-            const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/pdfs/${fileName}`;
+            // Verificar si el bucket "pdfs" existe, si no, intentar crearlo
+            const pdfsBucketExists = buckets.some(b => b.name === 'pdfs');
             
-            console.log('PDF generated and uploaded. Size:', pdfBlob.size / 1024, 'KB');
-            console.log('Public URL:', publicUrl);
+            if (!pdfsBucketExists) {
+                console.log('El bucket "pdfs" no existe, intentando crearlo...');
+                const { data: newBucket, error: createError } = await supabase.storage.createBucket('pdfs', {
+                    public: true,
+                    fileSizeLimit: 50000000 // 50MB
+                });
+                
+                if (createError) {
+                    console.error('Error al crear bucket:', createError);
+                    throw new Error(`No se pudo crear el bucket: ${createError.message}`);
+                }
+                
+                console.log('Bucket "pdfs" creado correctamente');
+            }
+            
+            // Subir el archivo usando el cliente de Supabase
+            const { data, error: uploadError } = await supabase.storage
+                .from('pdfs')
+                .upload(fileName, pdfBlob, {
+                    cacheControl: '3600',
+                    upsert: true,
+                    contentType: 'application/pdf'
+                });
+            
+            if (uploadError) {
+                console.error('Error al subir PDF:', uploadError);
+                throw new Error(`Error al subir PDF: ${uploadError.message}`);
+            }
+            
+            console.log('PDF subido correctamente:', data);
+            
+            // Obtener la URL pública
+            const { data: publicUrlData } = supabase.storage
+                .from('pdfs')
+                .getPublicUrl(fileName);
+            
+            const publicUrl = publicUrlData.publicUrl;
+            
+            console.log('PDF generado y subido. Tamaño:', pdfBlob.size / 1024, 'KB');
+            console.log('URL pública:', publicUrl);
             return publicUrl;
         } catch (storageError) {
             console.error('Error al subir a Supabase:', storageError);
