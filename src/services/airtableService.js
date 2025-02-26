@@ -24,7 +24,7 @@ export async function sendToAirtable(formData, pdfLink, signatureUrl) {
             {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
+                    'Authorization': `Bearer ${import.meta.env.AIRTABLE_API_KEY}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(airtableData)
