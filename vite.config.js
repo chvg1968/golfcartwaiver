@@ -11,7 +11,7 @@ export default defineConfig({
                 configure: (proxy, _options) => {
                     proxy.on('proxyReq', (proxyReq) => {
                         proxyReq.setHeader('Origin', 'https://api.resend.com');
-                        proxyReq.setHeader('Authorization', `Bearer ${process.env.VITE_RESEND_API_KEY}`);
+                        proxyReq.setHeader('Authorization', `Bearer ${process.env.RESEND_API_KEY}`);
                     });
                 }
             }

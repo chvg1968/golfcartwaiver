@@ -15,6 +15,7 @@ exports.handler = async function(event, context) {
     const data = JSON.parse(event.body);
     
     // Initialize Resend with API key from environment variable
+    // Sin prefijo VITE_
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     // Validate required fields

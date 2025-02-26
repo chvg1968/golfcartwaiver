@@ -4,6 +4,7 @@
   "description": "Golf Cart Waiter",
   "main": "index.html",
   "scripts": {
+    "dev:vite": "vite",
     "dev": "netlify dev",
     "build": "vite build",
     "serve": "vite preview"

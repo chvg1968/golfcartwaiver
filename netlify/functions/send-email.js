@@ -19,7 +19,8 @@ exports.handler = async function(event, context) {
       };
     }
 
-    const resend = new Resend(process.env.VITE_RESEND_API_KEY);
+    // Usar process.env sin el prefijo VITE_
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const TEST_EMAIL = 'conradovilla@gmail.com';
 
     const emailData = {
