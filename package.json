@@ -4,9 +4,7 @@
   "description": "Golf Cart Waiter",
   "main": "index.html",
   "scripts": {
-    "dev:client": "vite",
-    "dev:server": "node server.js",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "netlify dev",
     "build": "vite build",
     "serve": "vite preview"
   },
@@ -14,7 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
-    "express": "^4.21.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.0",
     "resend": "^4.1.2",
@@ -22,10 +19,8 @@
     "vite": "^6.1.1"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "cors": "^2.8.5",
+    "netlify-cli": "^17.0.0",
     "dotenv": "^16.4.7",
-    "netlify-cli": "^19.0.0",
     "path": "^0.12.7"
   }
 }

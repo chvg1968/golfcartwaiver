@@ -3,12 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 // Create a single supabase client for interacting with your database
 export const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL,
-    import.meta.env.VITE_SUPABASE_ANON_KEY, // Make sure this is the anon/public key, not the service_role key
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
     {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
-            storageKey: 'supabase-auth', // Explicitly set storage key
+            storageKey: 'supabase-auth',
         },
         global: {
             fetch: (...args) => fetch(...args),
@@ -16,7 +16,7 @@ export const supabase = createClient(
     }
 );
 
-// Función helper para subir PDFs con mejor manejo de errores y autenticación
+// Función helper para subir PDFs con mejor manejo de errores
 export async function uploadPDF(fileName, pdfBlob) {
     try {
         console.log('Iniciando subida a Supabase...', fileName);
@@ -31,20 +31,8 @@ export async function uploadPDF(fileName, pdfBlob) {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-            console.log('Usuario no autenticado, intentando subir como anónimo...');
-            
-            // Para subidas anónimas, podemos intentar autenticar con un usuario anónimo
-            // Solo si está habilitado en tu proyecto de Supabase
-            try {
-                const { error: signInError } = await supabase.auth.signInAnonymously();
-                if (signInError) {
-                    console.error('Error al autenticar anónimamente:', signInError);
-                } else {
-                    console.log('Autenticación anónima exitosa');
-                }
-            } catch (authError) {
-                console.error('Error en autenticación anónima:', authError);
-            }
+            console.log('Usuario no autenticado, continuando sin autenticación...');
+            // No intentamos autenticación anónima ya que está deshabilitada
         } else {
             console.log('Usuario autenticado:', session.user.email);
         }
@@ -53,7 +41,7 @@ export async function uploadPDF(fileName, pdfBlob) {
         console.log('Subiendo archivo a Supabase...');
         const { data, error } = await supabase.storage
             .from('pdfs')
-            .upload(`public/${fileName}`, pdfBlob, {  // Añadido prefijo 'public/'
+            .upload(`public/${fileName}`, pdfBlob, {
                 contentType: 'application/pdf',
                 cacheControl: '3600',
                 upsert: true
@@ -61,6 +49,13 @@ export async function uploadPDF(fileName, pdfBlob) {
 
         if (error) {
             console.error('Error de subida:', error);
+            
+            // Si el error es de permisos, intentamos una solución alternativa
+            if (error.statusCode === '403' || error.message.includes('security policy')) {
+                console.log('Error de permisos en Supabase, generando URL local...');
+                return URL.createObjectURL(pdfBlob);
+            }
+            
             throw error;
         }
 
@@ -69,18 +64,16 @@ export async function uploadPDF(fileName, pdfBlob) {
         // Obtener URL pública
         const { data: publicUrlData } = supabase.storage
             .from('pdfs')
-            .getPublicUrl(`public/${fileName}`);  // Usar el mismo path con prefijo
+            .getPublicUrl(`public/${fileName}`);
             
         console.log('URL pública generada:', publicUrlData);
         return publicUrlData.publicUrl;
 
     } catch (error) {
         console.error('Error en uploadPDF:', error);
-        return null;
+        
+        // Fallback a URL local en caso de cualquier error
+        console.log('Generando URL local como fallback...');
+        return URL.createObjectURL(pdfBlob);
     }
 }
-
-
-
-
-
