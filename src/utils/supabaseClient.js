@@ -2,14 +2,17 @@ import { createClient } from '@supabase/supabase-js';
 
 // Usa las variables de entorno correctas
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Asegúrate de usar la clave de servicio (service_role key) para operaciones de storage
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || 
+                   import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Información de depuración detallada
+// Información de depuración detallada (sin mostrar la clave completa por seguridad)
 console.log('Configuración de Supabase:', { 
     urlExists: !!supabaseUrl, 
     keyExists: !!supabaseKey,
-    url: supabaseUrl, // Muestra la URL para verificar que sea correcta
-    keyFirstChars: supabaseKey ? `${supabaseKey.substring(0, 10)}...` : null // Muestra primeros caracteres para verificar
+    url: supabaseUrl,
+    keyLength: supabaseKey ? supabaseKey.length : 0,
+    keyFirstChars: supabaseKey ? `${supabaseKey.substring(0, 5)}...` : null
 });
 
 if (!supabaseUrl || !supabaseKey) {
@@ -17,27 +20,30 @@ if (!supabaseUrl || !supabaseKey) {
     throw new Error('Variables de entorno de Supabase no configuradas');
 }
 
-// Crea el cliente de Supabase con opciones adicionales
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-    },
-    global: {
-        fetch: (...args) => fetch(...args)
-    }
-});
+// Crea el cliente de Supabase con opciones simplificadas
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Verificar conexión al inicializar
 (async function verificarConexion() {
     try {
+        // Primero verificar si podemos listar buckets (operación básica de storage)
+        const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+        
+        if (bucketsError) {
+            console.error('Error al listar buckets:', bucketsError);
+            console.warn('Posible problema con la API key o permisos');
+        } else {
+            console.log('Conexión a Supabase Storage exitosa. Buckets:', buckets);
+        }
+        
+        // Verificar sesión de autenticación
         const { data, error } = await supabase.auth.getSession();
         console.log('Estado de sesión Supabase:', { 
             tieneSession: !!data.session,
             error: error ? error.message : null
         });
     } catch (err) {
-        console.error('Error al verificar sesión Supabase:', err);
+        console.error('Error al verificar conexión Supabase:', err);
     }
 })();
 
@@ -63,18 +69,8 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
             const filePath = `public/${fileName}`;
             console.log(`Intentando subir archivo a Supabase bucket "pdfs" en la ruta: ${filePath}`);
             
-            // Verificar acceso al bucket antes de subir
-            const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('pdfs');
-            
-            if (bucketError) {
-                console.error('Error al acceder al bucket "pdfs":', bucketError);
-                throw new Error(`No se puede acceder al bucket: ${bucketError.message}`);
-            }
-            
-            console.log('Información del bucket:', bucketData);
-            console.log('Bucket es público:', bucketData.public);
-            
-            // Subir el archivo con los headers correctos
+            // Subir el archivo directamente sin verificar el bucket primero
+            // Esto evita una llamada API adicional que podría fallar
             const { data, error } = await supabase.storage
                 .from('pdfs')
                 .upload(filePath, pdfBlob, {
@@ -86,10 +82,11 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
             if (error) {
                 console.error('Error de subida:', error);
                 
-                // Si es un error de permisos, intentar verificar las policies
-                if (error.message.includes('permission') || error.statusCode === 403) {
-                    console.log('Verificando policies del bucket...');
-                    await testBucketPolicies();
+                // Si es un error de permisos o bucket, intentar verificar si el bucket existe
+                if (error.message.includes('bucket') || error.message.includes('permission') || 
+                    error.statusCode === 403 || error.statusCode === 404) {
+                    console.log('Verificando si el bucket existe...');
+                    await testBucketAccess();
                 }
                 
                 throw new Error(`Error al subir el archivo: ${error.message}`);
@@ -103,17 +100,6 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
                 .getPublicUrl(filePath);
                 
             console.log('URL pública generada:', publicUrlData);
-            
-            // Verificar que la URL sea accesible
-            try {
-                const urlCheck = await fetch(publicUrlData.publicUrl, { method: 'HEAD' });
-                console.log('Verificación de URL pública:', { 
-                    status: urlCheck.status,
-                    ok: urlCheck.ok
-                });
-            } catch (urlError) {
-                console.warn('No se pudo verificar la URL pública:', urlError);
-            }
             
             return publicUrlData.publicUrl;
 
@@ -140,6 +126,11 @@ export async function testBucketAccess() {
         
         if (error) {
             console.error('Error al listar buckets:', error);
+            console.error('Detalles del error:', {
+                message: error.message,
+                statusCode: error.statusCode,
+                details: error.details
+            });
             return false;
         }
         
@@ -148,7 +139,7 @@ export async function testBucketAccess() {
         // Verificar si existe el bucket 'pdfs'
         const pdfsBucket = data.find(bucket => bucket.name === 'pdfs');
         if (!pdfsBucket) {
-            console.error('El bucket "pdfs" no existe!');
+            console.error('El bucket "pdfs" no existe! Necesitas crear este bucket en el panel de Supabase.');
             return false;
         }
         
@@ -169,6 +160,11 @@ export async function testBucketAccess() {
         return true;
     } catch (error) {
         console.error('Excepción al probar acceso al bucket:', error);
+        console.error('Detalles de la excepción:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         return false;
     }
 }
