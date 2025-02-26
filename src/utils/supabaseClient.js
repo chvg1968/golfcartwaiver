@@ -68,8 +68,10 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
             const filePath = `public/${fileName}`;
             console.log(`Intentando subir archivo a Supabase bucket "pdfs" en la ruta: ${filePath}`);
             
-            // Subir el archivo directamente sin verificar el bucket primero
-            // Esto evita una llamada API adicional que podría fallar
+            // Intentar verificar si el bucket existe y sus políticas antes de subir
+            await testBucketAccess();
+            
+            // Subir el archivo
             const { data, error } = await supabase.storage
                 .from('pdfs')
                 .upload(filePath, pdfBlob, {
@@ -81,11 +83,10 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
             if (error) {
                 console.error('Error de subida:', error);
                 
-                // Si es un error de permisos o bucket, intentar verificar si el bucket existe
-                if (error.message.includes('bucket') || error.message.includes('permission') || 
-                    error.statusCode === 403 || error.statusCode === 404) {
-                    console.log('Verificando si el bucket existe...');
-                    await testBucketAccess();
+                // Si es un error de RLS, mostrar información más detallada
+                if (error.message.includes('row-level security policy')) {
+                    console.error('Error de políticas de seguridad (RLS). Necesitas configurar las políticas del bucket "pdfs" en Supabase.');
+                    console.error('Instrucciones para configurar RLS en el README.md');
                 }
                 
                 throw new Error(`Error al subir el archivo: ${error.message}`);
