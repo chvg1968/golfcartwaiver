@@ -6,6 +6,14 @@ export async function sendEmail(formData, pdfLink) {
     console.log('Iniciando envío de email...');
     
     try {
+        // Verificar si el pdfLink es un blob URL y manejarlo adecuadamente
+        if (pdfLink && pdfLink.startsWith('blob:')) {
+            console.log('Detectado blob URL, se enviará como referencia');
+            // Opcionalmente, podrías convertir el blob a base64 y adjuntarlo
+            // Por ahora, solo notificamos que es un enlace local
+            pdfLink = 'PDF generado localmente (no disponible para visualización remota)';
+        }
+        
         // Preparar datos para enviar a la función serverless
         const emailPayload = {
             formData: {

@@ -23,6 +23,10 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // Log para depuración
+    console.log('Datos recibidos en la función:', { formData, pdfLink });
+    console.log('API Key disponible:', !!process.env.RESEND_API_KEY);
+
     // Inicializar Resend con la clave API
     const resend = new Resend(process.env.RESEND_API_KEY);
     
@@ -48,6 +52,8 @@ exports.handler = async function(event, context) {
         <p>Date: ${new Date().toLocaleString()}</p>
       `
     };
+
+    console.log('Intentando enviar email con datos:', emailData);
 
     // Enviar el correo
     const { data, error } = await resend.emails.send(emailData);
