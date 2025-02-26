@@ -3,10 +3,14 @@ const { Resend } = require('resend');
 exports.handler = async function(event, context) {
   // Solo permitir método POST
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Método no permitido' };
+    return { 
+      statusCode: 405, 
+      body: JSON.stringify({ success: false, error: 'Método no permitido' })
+    };
   }
 
   try {
+    // Parsear el cuerpo de la solicitud
     const { formData, pdfLink } = JSON.parse(event.body);
     
     if (!formData || !pdfLink) {
@@ -19,12 +23,15 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Usar process.env sin el prefijo VITE_
+    // Inicializar Resend con la clave API
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const TEST_EMAIL = 'conradovilla@gmail.com';
+    
+    // Dirección de correo para pruebas
+    const TEST_EMAIL = process.env.TEST_EMAIL || 'conradovilla@gmail.com';
 
+    // Preparar datos del correo
     const emailData = {
-      from: 'Resend <onboarding@resend.dev>',
+      from: 'Golf Cart Waiver <onboarding@resend.dev>',
       to: TEST_EMAIL,
       subject: 'Golf Cart Liability Waiver - Confirmation',
       html: `
@@ -32,6 +39,9 @@ exports.handler = async function(event, context) {
         <p>A new waiver form has been submitted.</p>
         <p><strong>Guest Name:</strong> ${formData.guestName}</p>
         <p><strong>Form ID:</strong> ${formData.formId}</p>
+        <p><strong>License:</strong> ${formData.license}</p>
+        <p><strong>Issuing State:</strong> ${formData.issuingState}</p>
+        <p><strong>Address:</strong> ${formData.address}</p>
         <p>You can download the signed waiver here: <a href="${pdfLink}">Download PDF</a></p>
         <hr>
         <p><small>Note: This is a test email sent to verified address.</small></p>
@@ -39,36 +49,39 @@ exports.handler = async function(event, context) {
       `
     };
 
-    const result = await resend.emails.send(emailData);
+    // Enviar el correo
+    const { data, error } = await resend.emails.send(emailData);
 
-    if (result.error) {
+    if (error) {
+      console.error('Error sending email:', error);
       return {
         statusCode: 500,
         body: JSON.stringify({
           success: false,
-          error: result.error
+          error: error
         })
       };
     }
 
+    // Respuesta exitosa
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        result: {
-          id: result.id,
-          to: emailData.to,
-          note: 'Email enviado en modo de prueba'
-        }
+        data: data
       })
     };
 
   } catch (error) {
+    console.error('Function error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        success: false, 
-        error: error.message
+      body: JSON.stringify({
+        success: false,
+        error: {
+          message: 'Error interno del servidor',
+          details: error.message
+        }
       })
     };
   }

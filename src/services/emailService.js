@@ -24,23 +24,32 @@ export async function sendEmail(formData, pdfLink) {
         const response = await fetch('/.netlify/functions/send-email', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(emailPayload),
+            body: JSON.stringify(emailPayload)
         });
         
-        const result = await response.json();
+        const responseData = await response.json();
         
         if (!response.ok) {
-            console.error('Error en respuesta del servidor:', result);
-            throw new Error(`Error al enviar email: ${result.error || 'Error desconocido'}`);
+            console.error('Error en respuesta del servidor:', responseData);
+            return {
+                success: false,
+                error: responseData.error || 'Error desconocido del servidor'
+            };
         }
         
-        console.log('Email enviado exitosamente:', result);
+        console.log('Email enviado exitosamente:', responseData);
+        return {
+            success: true,
+            data: responseData.data
+        };
         
-        return { success: true, data: result };
     } catch (error) {
         console.error('Detailed error sending email:', error);
-        return { success: false, error: error.message };
+        return {
+            success: false,
+            error: `Error al enviar email: ${error.message || error}`
+        };
     }
 }

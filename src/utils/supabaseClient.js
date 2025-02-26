@@ -31,8 +31,9 @@ export async function uploadPDF(fileName, pdfBlob) {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-            console.log('Usuario no autenticado, continuando sin autenticación...');
-            // No intentamos autenticación anónima ya que está deshabilitada
+            console.log('Usuario no autenticado, generando URL local...');
+            // Si no hay sesión, devolvemos directamente una URL local
+            return URL.createObjectURL(pdfBlob);
         } else {
             console.log('Usuario autenticado:', session.user.email);
         }
@@ -50,13 +51,9 @@ export async function uploadPDF(fileName, pdfBlob) {
         if (error) {
             console.error('Error de subida:', error);
             
-            // Si el error es de permisos, intentamos una solución alternativa
-            if (error.statusCode === '403' || error.message.includes('security policy')) {
-                console.log('Error de permisos en Supabase, generando URL local...');
-                return URL.createObjectURL(pdfBlob);
-            }
-            
-            throw error;
+            // Si hay cualquier error, generamos URL local
+            console.log('Error al subir a Supabase, generando URL local...');
+            return URL.createObjectURL(pdfBlob);
         }
 
         console.log('Archivo subido exitosamente:', data);
