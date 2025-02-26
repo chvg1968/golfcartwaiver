@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Usa las variables de entorno correctas
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-// Asegúrate de usar la clave de servicio (service_role key) para operaciones de storage
+// Actualizado: Ya no usamos service_role key, solo la anon key para el cliente
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY || 
                    import.meta.env.VITE_SUPABASE_ANON_KEY;
 
