@@ -1,13 +1,16 @@
 export async function sendEmail(formData, pdfLink) {
     try {
+        // Convertir FormData a un objeto plano para asegurar todos los campos
+        const formDataObject = Object.fromEntries(formData.entries());
+
         // Preparar datos para enviar a la función serverless
         const emailPayload = {
             formData: {
-                guestName: formData.get('Guest Name') || 'No proporcionado',
-                license: formData.get('License') || 'No proporcionado',
-                issuingState: formData.get('Issuing State') || 'No proporcionado',
-                address: formData.get('Address') || 'No proporcionado',
-                formId: formData.get('Form Id') || Date.now().toString()
+                guestName: formDataObject['Guest Name'] || 'No proporcionado',
+                license: formDataObject['License'] || 'No proporcionado',
+                issuingState: formDataObject['Issuing State'] || 'No proporcionado',
+                address: formDataObject['Address'] || 'No proporcionado',
+                formId: formDataObject['Form Id'] || Date.now().toString()
             },
             pdfLink: pdfLink
         };

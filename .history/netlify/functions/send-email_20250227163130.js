@@ -36,44 +36,45 @@ exports.handler = async function(event, context) {
       <p>Date: ${new Date().toLocaleString()}</p>
     `;
 
-    const emailPayload = {
+    const emailData = {
       from: 'Golf Cart Waiver <onboarding@resend.dev>',
       to: TEST_EMAIL,
       subject: `Golf Cart Liability Waiver - ${guestName}`,
       html: emailHtml
     };
 
-    // Reutilizar lógica de emails.js
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const { data: emailData, error } = await resend.emails.send(emailPayload);
-    
+    const { data, error } = await resend.emails.send(emailData);
+
     if (error) {
-      console.error('Resend API error:', error);
+      console.error('Error sending email:', error);
       return {
         statusCode: 500,
         body: JSON.stringify({
           success: false,
-          message: error.message
+          error: error
         })
       };
     }
-    
+
     return {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        data: { id: emailData.id, message: 'Email sent successfully' }
+        data: data
       })
     };
 
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('Error en envío de email:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
         success: false,
-        message: 'Internal Server Error',
-        details: error.message
+        error: {
+          message: 'Error interno del servidor',
+          details: error.message
+        }
       })
     };
   }
