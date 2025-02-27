@@ -14,6 +14,23 @@ export class SignatureComponent {
         
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
+
+        // Prevent default touch behavior to avoid signature clearing
+        this.preventDefaultTouchBehavior();
+    }
+
+    preventDefaultTouchBehavior() {
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+        }, { passive: false });
     }
 
     resizeCanvas() {
