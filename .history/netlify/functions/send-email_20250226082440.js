@@ -31,7 +31,7 @@ exports.handler = async function(event, context) {
     const emailData = {
       from: 'Golf Cart Waiver <onboarding@resend.dev>',
       to: TEST_EMAIL,
-      subject: `Golf Cart Liability Waiver - ${formData.guestName}`,
+      subject: 'Golf Cart Liability Waiver - Confirmation',
       html: `
         <h1>Golf Cart Liability Waiver</h1>
         <p>A new waiver form has been submitted.</p>
