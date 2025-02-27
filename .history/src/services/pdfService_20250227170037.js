@@ -41,11 +41,11 @@ export async function generatePDF(formElement) {
             position: 'absolute',
             left: '-9999px',
             top: '0',
-            width: '216mm', // Ancho estándar Letter
+            width: '210mm', // Ancho estándar A4
             background: 'white',
-            padding: '10mm', // Márgenes reducidos
+            padding: '10mm', // Márgenes más generosos
             fontSize: '11px', // Tamaño de fuente ligeramente reducido
-            lineHeight: '1.5', // Interlineado para mejor legibilidad
+            lineHeight: '1.6', // Interlineado para mejor legibilidad
             fontFamily: 'Arial, sans-serif' // Fuente más legible
         });
         
@@ -71,16 +71,16 @@ export async function generatePDF(formElement) {
         // Renderizar a canvas con configuración optimizada
         const canvas = await html2canvas(tempContainer, html2canvasOptions);
         
-        // Crear PDF optimizado para Letter
+        // Crear PDF optimizado
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
-            format: 'letter',
+            format: 'a4',
             compress: true
         });
         
-        const pageWidth = pdf.internal.pageSize.getWidth() - 20; // Márgenes laterales
-        const pageHeight = pdf.internal.pageSize.getHeight() - 20; // Márgenes verticales
+        const pageWidth = pdf.internal.pageSize.getWidth() - 40; // Márgenes más amplios
+        const pageHeight = pdf.internal.pageSize.getHeight() - 40; // Márgenes más amplios
         
         // Calcular dimensiones para mantener la proporción
         const canvasWidth = canvas.width;
@@ -116,12 +116,12 @@ export async function generatePDF(formElement) {
             const sectionImgData = tempCanvas.toDataURL('image/jpeg', 0.7);
             
             // Añadir al PDF con márgenes
-            pdf.addImage(sectionImgData, 'JPEG', 10, 10, pageWidth, pageHeight, null, 'FAST');
+            pdf.addImage(sectionImgData, 'JPEG', 20, 20, pageWidth, pageHeight, null, 'FAST');
             
             // Añadir número de página con estilo
-            pdf.setFontSize(9);
+            pdf.setFontSize(10);
             pdf.setTextColor(100);
-            pdf.text(`Page ${i + 1} of ${pageCount}`, pageWidth / 2 + 10, pageHeight + 10, { 
+            pdf.text(`Page ${i + 1} of ${pageCount}`, pageWidth / 2 + 20, pageHeight + 20, { 
                 align: 'center' 
             });
         }
