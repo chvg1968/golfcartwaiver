@@ -59,7 +59,7 @@ export async function generatePDF(formElement) {
             willReadFrequently: true,
             imageTimeout: 0,
             removeContainer: true, // Eliminar contenedor después de renderizar
-            letterRendering: true, // Desactivar para mejorar rendimiento
+            letterRendering: false, // Desactivar para mejorar rendimiento
             allowTaint: true, // Permitir imágenes del mismo origen sin restricciones
             foreignObjectRendering: false // Desactivar para compatibilidad
         };

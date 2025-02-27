@@ -119,40 +119,93 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
 }
 
 // Función para probar el acceso al bucket
-export async function testBucketAccess() {
-    try {
-        console.log('Probando acceso al bucket...');
-        let { data, error } = await supabase.storage.from("pdfs").list();
+// export async function testBucketAccess() {
+//     try {
+//         console.log('Probando acceso al bucket...');
+//         const { data, error } = await supabase.storage.listBuckets();
         
-        if (error) {
-            console.error('Error al listar buckets:', error);
-            console.error('Detalles del error:', {
-                message: error.message,
-                statusCode: error.statusCode,
-                details: error.details
-            });
-            return false;
-        }
-         
-        // Listar archivos en la carpeta public
-        const { data: files, error: filesError } = await supabase.storage
-            .from('pdfs')
-            .list('public');
+//         if (error) {
+//             console.error('Error al listar buckets:', error);
+//             console.error('Detalles del error:', {
+//                 message: error.message,
+//                 statusCode: error.statusCode,
+//                 details: error.details
+//             });
+//             return false;
+//         }
+        
+//         console.log('Buckets disponibles:', data);
+        
+//         // Verificar si existe el bucket 'pdfs'
+//         const pdfsBucket = data.find(bucket => bucket.name === 'pdfs');
+//         if (!pdfsBucket) {
+//             console.error('El bucket "pdfs" no existe! Necesitas crear este bucket en el panel de Supabase.');
+//             return false;
+//         }
+        
+//         console.log('Bucket "pdfs" encontrado:', pdfsBucket);
+//         console.log('Bucket es público:', pdfsBucket.public);
+        
+//         // Listar archivos en la carpeta public
+//         const { data: files, error: filesError } = await supabase.storage
+//             .from('pdfs')
+//             .list('public');
             
-        if (filesError) {
-            console.error('Error al listar archivos en la carpeta public:', filesError);
-        } else {
-            console.log('Archivos en la carpeta public:', files);
-        }
+//         if (filesError) {
+//             console.error('Error al listar archivos en la carpeta public:', filesError);
+//         } else {
+//             console.log('Archivos en la carpeta public:', files);
+//         }
         
-        return true;
-    } catch (error) {
-        console.error('Excepción al probar acceso al bucket:', error);
-        console.error('Detalles de la excepción:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
-        return false;
-    }
-}
+//         return true;
+//     } catch (error) {
+//         console.error('Excepción al probar acceso al bucket:', error);
+//         console.error('Detalles de la excepción:', {
+//             name: error.name,
+//             message: error.message,
+//             stack: error.stack
+//         });
+//         return false;
+//     }
+// }
+
+// // Nueva función para verificar las policies del bucket
+// async function testBucketPolicies() {
+//     try {
+//         console.log('Verificando policies del bucket "pdfs"...');
+        
+//         // Intentar crear un archivo de prueba pequeño
+//         const testBlob = new Blob(['test'], { type: 'text/plain' });
+//         const testPath = `public/test-${Date.now()}.txt`;
+        
+//         const { data: uploadData, error: uploadError } = await supabase.storage
+//             .from('pdfs')
+//             .upload(testPath, testBlob, {
+//                 contentType: 'text/plain',
+//                 upsert: true
+//             });
+            
+//         if (uploadError) {
+//             console.error('Error al subir archivo de prueba:', uploadError);
+//             console.log('Posible problema con la policy de insert');
+//         } else {
+//             console.log('Prueba de upload exitosa:', uploadData);
+            
+//             // Probar lectura
+//             const { data: urlData } = supabase.storage
+//                 .from('pdfs')
+//                 .getPublicUrl(testPath);
+                
+//             console.log('URL de prueba generada:', urlData);
+            
+//             // Intentar eliminar el archivo de prueba
+//             await supabase.storage
+//                 .from('pdfs')
+//                 .remove([testPath]);
+                
+//             console.log('Archivo de prueba eliminado');
+//         }
+//     } catch (error) {
+//         console.error('Error al verificar policies:', error);
+//     }
+// }

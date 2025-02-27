@@ -28,19 +28,10 @@ exports.handler = async function(event, context) {
     
     const TEST_EMAIL = process.env.TEST_EMAIL || 'conradovilla@gmail.com';
 
-    console.log("Form Data:", formData); // Depurar el contenido
-
-    if (!formData || !formData.guestName) {
-      console.error("Error: guestName no está definido.");
-    return;
-    }
-
-const guestName = formData.guestName.trim() || "Unknown Guest";
-
     const emailData = {
       from: 'Golf Cart Waiver <onboarding@resend.dev>',
       to: TEST_EMAIL,
-      subject: `Golf Cart Liability Waiver - ${guestName}`,
+      subject: `Golf Cart Liability Waiver - ${formData.guestName}`,
       html: `
         <h1>Golf Cart Liability Waiver</h1>
         <p>A new waiver form has been submitted.</p>

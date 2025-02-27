@@ -30,7 +30,7 @@ export async function sendEmail(formData, pdfLink) {
         }
 
         const data = await response.json();
-        console.log('Email has been successfully sent', data);
+        console.log('Email enviado exitosamente:', data);
         return { success: true, data };
 
     } catch (error) {

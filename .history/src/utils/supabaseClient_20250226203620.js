@@ -133,7 +133,8 @@ export async function testBucketAccess() {
             });
             return false;
         }
-         
+        
+        console.log('Buckets disponibles:', data)  
         // Listar archivos en la carpeta public
         const { data: files, error: filesError } = await supabase.storage
             .from('pdfs')

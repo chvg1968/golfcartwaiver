@@ -133,7 +133,24 @@ export async function testBucketAccess() {
             });
             return false;
         }
-         
+        
+        console.log('Buckets disponibles:', data);
+        
+
+        if (!Array.isArray(data)) {
+            console.error('Error: La respuesta de Supabase no es un array.');
+            return false;
+        }
+        // Verificar si existe el bucket 'pdfs'
+        const pdfsBucket = data.find(bucket => bucket.name === 'pdfs');
+        if (!pdfsBucket) {
+            console.error('El bucket "pdfs" no existe! Necesitas crear este bucket en el panel de Supabase.');
+            return false;
+        }
+        
+        console.log('Bucket "pdfs" encontrado:', pdfsBucket);
+        console.log('Bucket es público:', pdfsBucket.public);
+        
         // Listar archivos en la carpeta public
         const { data: files, error: filesError } = await supabase.storage
             .from('pdfs')
