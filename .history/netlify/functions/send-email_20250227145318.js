@@ -50,7 +50,7 @@ exports.handler = async function(event, context) {
       from: 'Golf Cart Waiver <onboarding@resend.dev>',
       to: TEST_EMAIL,
       subject: `Golf Cart Liability Waiver - ${guestName}`,
-      text: emailHtml
+      html: emailHtml
     };
 
     const { data, error } = await resend.emails.send(emailData);
