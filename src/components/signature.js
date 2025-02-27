@@ -15,22 +15,29 @@ export class SignatureComponent {
         this.resizeCanvas();
         window.addEventListener('resize', () => this.resizeCanvas());
 
-        // Prevent default touch behavior to avoid signature clearing
-        this.preventDefaultTouchBehavior();
+        // Enhanced touch handling
+        this.setupTouchHandling();
     }
 
-    preventDefaultTouchBehavior() {
-        this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-        }, { passive: false });
+    setupTouchHandling() {
+        // Prevent default touch behaviors that might interfere with signature drawing
+        const preventDefaultTouch = (e) => {
+            if (e.target === this.canvas) {
+                e.preventDefault();
+            }
+        };
 
-        this.canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-        }, { passive: false });
+        // Add touch event listeners with more specific handling
+        this.canvas.addEventListener('touchstart', preventDefaultTouch, { passive: false });
+        this.canvas.addEventListener('touchmove', preventDefaultTouch, { passive: false });
+        this.canvas.addEventListener('touchend', preventDefaultTouch, { passive: false });
 
-        this.canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-        }, { passive: false });
+        // Ensure signature is not cleared on touch outside
+        document.addEventListener('touchstart', (e) => {
+            if (e.target !== this.canvas && !this.canvas.contains(e.target)) {
+                e.stopPropagation();
+            }
+        }, { passive: true });
     }
 
     resizeCanvas() {
@@ -43,6 +50,12 @@ export class SignatureComponent {
         this.canvas.width = width * ratio;
         this.canvas.height = height * ratio;
         context.scale(ratio, ratio);
+
+        // Redraw signature after resizing to prevent clearing
+        if (!this.signaturePad.isEmpty()) {
+            const signatureData = this.signaturePad.toData();
+            this.signaturePad.fromData(signatureData);
+        }
     }
 
     clear() {
