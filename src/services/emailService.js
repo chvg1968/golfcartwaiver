@@ -1,7 +1,5 @@
 export async function sendEmail(formData, pdfLink) {
     try {
-        console.log('Iniciando envío de email...');
-        
         // Preparar datos para enviar a la función serverless
         const emailPayload = {
             formData: {
@@ -13,8 +11,6 @@ export async function sendEmail(formData, pdfLink) {
             },
             pdfLink: pdfLink
         };
-        
-        console.log('Enviando datos al servidor:', emailPayload);
 
         const response = await fetch('/.netlify/functions/send-email', {
             method: 'POST',
@@ -30,11 +26,10 @@ export async function sendEmail(formData, pdfLink) {
         }
 
         const data = await response.json();
-        console.log('Email has been successfully sent', data);
         return { success: true, data };
 
     } catch (error) {
-        console.error('Error detallado al enviar email:', error);
-        return { success: false, error: error.message };
+        console.error('Error enviando email:', error);
+        throw error;
     }
 }

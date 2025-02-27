@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Generar y subir PDF con mejor manejo de errores
-            console.log('Iniciando generación de PDF...');
             const pdfLink = await generatePDF(this).catch(error => {
                 console.error('Error en generación de PDF:', error);
                 throw new Error(`Error al generar el PDF: ${error.message}`);
@@ -57,14 +56,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('No se pudo obtener el enlace del PDF');
             }
 
-            console.log('PDF generado exitosamente:', pdfLink);
-
             // Enviar datos a Airtable
-            console.log('Enviando datos a Airtable...');
             await sendToAirtable(formData, pdfLink);
 
             // Enviar correo electrónico
-            console.log('Intentando enviar correo electrónico...');
             const emailResult = await sendEmail(formData, pdfLink);
             
             // Mostrar mensaje de éxito y limpiar formulario

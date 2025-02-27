@@ -4,7 +4,6 @@ import { supabase, uploadPDF } from '../utils/supabaseClient';
 
 export async function generatePDF(formElement) {
     try {
-        console.log('Iniciando generación de PDF optimizado...');
         await document.fonts.ready;
 
         // Capturar la firma antes de clonar
@@ -88,7 +87,6 @@ export async function generatePDF(formElement) {
         // Si el contenido es demasiado largo, dividirlo en múltiples páginas
         if (pdfHeight > pageHeight) {
             const pageCount = Math.ceil(pdfHeight / pageHeight);
-            console.log(`Contenido dividido en ${pageCount} páginas`);
             
             for (let i = 0; i < pageCount; i++) {
                 if (i > 0) pdf.addPage();
@@ -155,18 +153,15 @@ export async function generatePDF(formElement) {
         // Descarga local
         pdf.save(fileName);
 
-        console.log('PDF generado localmente, tamaño:', compressedPdf.size / 1024, 'KB');
-
         // Subir a Supabase usando la función helper mejorada
         try {
             const fileName = `waiver_${Date.now()}.pdf`;
             const publicUrl = await uploadPDF(fileName, compressedPdf);
             
             if (publicUrl) {
-                console.log('PDF subido exitosamente:', publicUrl);
                 return publicUrl;
             } else {
-                console.log('No se pudo subir el PDF a Supabase');
+                console.error('No se pudo subir el PDF a Supabase');
                 return null;
             }
         } catch (uploadError) {

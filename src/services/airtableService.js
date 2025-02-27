@@ -17,8 +17,6 @@ export async function sendToAirtable(formData, pdfLink, signatureUrl) {
             }
         };
 
-        console.log('Enviando a Airtable:', JSON.stringify(airtableData, null, 2));
-
         // Corregir el acceso a la variable de entorno
         const response = await fetch(
             `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/${import.meta.env.VITE_AIRTABLE_TABLE_NAME}`,
@@ -39,15 +37,10 @@ export async function sendToAirtable(formData, pdfLink, signatureUrl) {
             throw new Error(`Error Airtable: ${responseData.error?.message || 'Error desconocido'}`);
         }
 
-        console.log('Datos enviados exitosamente a Airtable:', responseData);
         return responseData;
 
     } catch (error) {
-        console.error('Error detallado al enviar a Airtable:', {
-            message: error.message,
-            originalError: error,
-            stack: error.stack
-        });
+        console.error('Error enviando datos a Airtable:', error);
         throw error;
     }
 }

@@ -21,21 +21,16 @@ exports.handler = async function(event, context) {
       };
     }
 
-    console.log('Datos recibidos en la función:', { formData, pdfLink });
-    console.log('API Key disponible:', !!process.env.RESEND_API_KEY);
-
     const resend = new Resend(process.env.RESEND_API_KEY);
     
     const TEST_EMAIL = process.env.TEST_EMAIL || 'conradovilla@gmail.com';
 
-    console.log("Form Data:", formData); // Depurar el contenido
-
     if (!formData || !formData.guestName) {
       console.error("Error: guestName no está definido.");
-    return;
+      return;
     }
 
-const guestName = formData.guestName.trim() || "Unknown Guest";
+    const guestName = formData.guestName.trim() || "Unknown Guest";
 
     const emailData = {
       from: 'Golf Cart Waiver <onboarding@resend.dev>',
@@ -55,8 +50,6 @@ const guestName = formData.guestName.trim() || "Unknown Guest";
         <p>Date: ${new Date().toLocaleString()}</p>
       `
     };
-
-    console.log('Intentando enviar email con datos:', emailData);
 
     const { data, error } = await resend.emails.send(emailData);
 
@@ -80,7 +73,7 @@ const guestName = formData.guestName.trim() || "Unknown Guest";
     };
 
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('Error en envío de email:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
