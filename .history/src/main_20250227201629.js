@@ -56,23 +56,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('No se pudo obtener el enlace del PDF');
             }
 
-            // Crear objeto de datos del formulario
-            const formDataObject = {
-                guestName: formData.get('Guest Name'),
-                license: formData.get('License'),
-                issuingState: formData.get('Issuing State'),
-                address: formData.get('Address'),
-                signatureDate: formData.get('Signature Date'),
+            // Crear objeto manual de datos del formulario
+            const formDataManual = {
+                guestName: this.querySelector('input[name="guestName"]')?.value,
+                license: this.querySelector('input[name="license"]')?.value,
+                issuingState: this.querySelector('input[name="issuingState"]')?.value,
+                address: this.querySelector('input[name="address"]')?.value,
                 formId: `CV-${Date.now().toString(36)}`
             };
 
-            console.log('Datos del formulario:', formDataObject);
+            console.log('Datos manuales del formulario:', formDataManual);
 
             // Enviar datos a Airtable
+            console.log('Contenido de formData antes de enviar:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
             await sendToAirtable(formData, pdfLink);
 
             // Enviar correo electrónico
-            const emailResult = await sendEmail(formDataObject, pdfLink);
+            const emailResult = await sendEmail(formDataManual, pdfLink);
             
             // Mostrar mensaje de éxito y limpiar formulario
             alert('Formulario enviado correctamente' + 

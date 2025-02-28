@@ -17,12 +17,9 @@ export async function sendEmail(formData, pdfLink) {
 
         console.log('Payload completo para envío:', JSON.stringify(emailPayload, null, 2));
 
-        // En tu archivo de servicio de email
-        const API_BASE_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3001/api'  // URL de tu backend local
-            : 'https://golfcartwaiver-server.netlify.app/api';
-
-        const API_URL = `${API_BASE_URL}/send-waiver-email`;
+        const API_URL = window.location.hostname === 'localhost' 
+            ? '/proxy/send-waiver-email'  // Para desarrollo local
+  : 'https://golfcartwaiver-server.netlify.app/api/send-waiver-email'; 
 
         try {
             const response = await fetch(API_URL, {

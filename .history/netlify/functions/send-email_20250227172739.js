@@ -21,19 +21,34 @@ exports.handler = async function(event, context) {
       };
     }
 
+    // Log de depuración de datos del formulario
+    console.log('Datos del formulario recibidos:', JSON.stringify(formData, null, 2));
+    console.log('Enlace PDF:', pdfLink);
+
     const TEST_EMAIL = process.env.TEST_EMAIL || 'conradovilla@gmail.com';
     const guestName = formData.guestName || "Unknown Guest";
 
     const emailHtml = `
       <h1>Golf Cart Liability Waiver</h1>
       <p>A new waiver form has been submitted.</p>
+      
       <div style="background-color: #f4f4f4; padding: 15px; border-radius: 5px;">
-        ${Object.keys(formData).map(key => `<p><strong>${key}:</strong> ${formData[key] || "N/A"}</p>`).join('')}
+        <h2>Detalles del Formulario</h2>
+        ${Object.entries(formData).map(([key, value]) => `
+          <p>
+            <strong>${key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1')}:</strong> 
+            ${value || "N/A"}
+          </p>
+        `).join('')}
       </div>
-      <p>You can download the signed waiver here: <a href="${pdfLink}">Download PDF</a></p>
+      
+      <h3>Additional Information</h3>
+      <p><strong>Form ID:</strong> ${formData.formId || 'No disponible'}</p>
+      <p><strong>PDF Link:</strong> <a href="${pdfLink}">Download PDF</a></p>
+      
       <hr />
-      <p><small>Note: This is a test email sent to a verified address.</small></p>
-      <p>Date: ${new Date().toLocaleString()}</p>
+      <p><small>Note: This is a test email sent to verified address.</small></p>
+      <p>Date: ${new Date().toLocaleString('es-ES', { timeZone: 'America/New_York' })}</p>
     `;
 
     const emailPayload = {
@@ -53,7 +68,8 @@ exports.handler = async function(event, context) {
         statusCode: 500,
         body: JSON.stringify({
           success: false,
-          message: error.message
+          error: 'Failed to send email',
+          details: error
         })
       };
     }
@@ -62,7 +78,8 @@ exports.handler = async function(event, context) {
       statusCode: 200,
       body: JSON.stringify({
         success: true,
-        data: { id: emailData.id, message: 'Email sent successfully' }
+        message: 'Email sent successfully',
+        data: emailData
       })
     };
 
