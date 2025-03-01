@@ -5,9 +5,9 @@ export async function sendEmail(formData, pdfLink) {
             ? Object.fromEntries(formData.entries()) 
             : formData;
 
-        // Log de todos los campos del formulario
-        console.log('Todos los campos del formulario:', formDataObject);
-        console.log('Enlace PDF:', pdfLink);
+        // Log de todos los campos del formulario con más detalle
+        console.log('Datos del formulario completos:', JSON.stringify(formDataObject, null, 2));
+        console.log('Enlace PDF completo:', pdfLink);
 
         // Preparar datos para enviar a la función serverless
         const emailPayload = {
@@ -20,32 +20,43 @@ export async function sendEmail(formData, pdfLink) {
         try {
             const response = await fetch('https://golfcartwaiver-server.onrender.com/api/send-waiver-email', {
               method: 'POST',
-              credentials: 'include', // Importante para credenciales CORS
               headers: {
-                'Content-Type': 'application/json',
-                'Origin': 'https://golf-cart-waiver.netlify.app'
+                'Content-Type': 'application/json'
               },
               body: JSON.stringify(emailPayload)
             });
             
-            console.log('Respuesta del servidor - Status:', response.status);
+            console.log('Respuesta del servidor - Status completo:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
             
             const result = await response.json();
             console.log('Respuesta completa del servidor:', result);
 
             if (!response.ok) {
-                console.error('Error en la respuesta del servidor:', result);
-                throw new Error(`Error al enviar email: ${response.status} - ${result.error}`);
+                console.error('Error en la respuesta del servidor:', {
+                    status: response.status,
+                    result: result
+                });
+                throw new Error(`Error al enviar email: ${response.status} - ${JSON.stringify(result)}`);
             }
 
             return result;
         } catch (error) {
-            console.error('Error al enviar el formulario:', error);
+            console.error('Error detallado al enviar el formulario:', {
+                message: error.message,
+                stack: error.stack
+            });
             throw error;
         }
 
     } catch (error) {
-        console.error('Error enviando email:', error);
+        console.error('Error general enviando email:', {
+            message: error.message,
+            stack: error.stack
+        });
         throw error;
     }
 }
