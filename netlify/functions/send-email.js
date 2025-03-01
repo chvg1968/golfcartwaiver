@@ -9,25 +9,54 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // Parsear el cuerpo de la solicitud
-    let payload;
-    try {
-        payload = JSON.parse(event.body);
-    } catch (error) {
+    // Obtener TEST_EMAIL con múltiples fuentes
+    const testEmails = [
+        process.env.TEST_EMAIL,
+        process.env.VITE_TEST_EMAIL
+    ];
+    const TEST_EMAIL = testEmails.find(email => email && email.trim() !== '');
+
+    // Obtener RESEND_API_KEY con múltiples fuentes
+    const resendApiKeys = [
+        process.env.RESEND_API_KEY,
+        process.env.VITE_RESEND_API_KEY
+    ];
+    const RESEND_API_KEY = resendApiKeys.find(key => key && key.trim() !== '');
+
+    // Validar configuraciones
+    if (!TEST_EMAIL) {
         return {
-            statusCode: 400,
-            body: JSON.stringify({ message: 'Invalid JSON payload', error: error.message })
+            statusCode: 500,
+            body: JSON.stringify({ message: 'TEST_EMAIL no configurado' })
         };
     }
 
-    // Inicializar Resend con la API key
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    if (!RESEND_API_KEY) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'RESEND_API_KEY no configurado' })
+        };
+    }
+
+    // Inicializar Resend
+    const resend = new Resend(RESEND_API_KEY);
 
     try {
+        // Parsear el cuerpo de la solicitud
+        let payload;
+        try {
+            payload = JSON.parse(event.body);
+        } catch (error) {
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ message: 'Invalid JSON payload', error: error.message })
+            };
+        }
+
         // Enviar email
         const result = await resend.emails.send({
             from: `Golf Cart Waiver from ${payload.formData.guestName} <onboarding@resend.dev>`,
-            to: process.env.TEST_EMAIL,
+            to: TEST_EMAIL,
             subject: 'Golf Cart Liability Waiver',
             html: `
 <!DOCTYPE html>
