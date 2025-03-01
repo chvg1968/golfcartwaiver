@@ -156,22 +156,40 @@ export async function sendEmail(formData, pdfLink) {
 
     // Función para enviar email con Resend
     const sendEmailWithResend = async (emailPayload) => {
+        // Verificar si Resend está inicializado
+        if (!resend) {
+            console.warn('Resend no está inicializado. No se puede enviar email.');
+            return {
+                success: false,
+                error: 'Resend API Key no configurada'
+            };
+        }
+
+        // Validar que TEST_EMAIL esté configurado
+        if (!TEST_EMAIL) {
+            console.warn('TEST_EMAIL no está configurado. No se puede enviar email.');
+            return {
+                success: false,
+                error: 'TEST_EMAIL no configurado'
+            };
+        }
+
         try {
-            const response = await fetch('/.netlify/functions/send-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(emailPayload)
+            const { formData, pdfLink } = emailPayload;
+            
+            const result = await resend.emails.send({
+                from: `Golf Cart Waiver from ${formData.guestName} <onboarding@resend.dev>`,
+                to: TEST_EMAIL,
+                subject: 'Golf Cart Liability Waiver',
+                html: generateEmailHTML(formData, pdfLink),
+                text: generateEmailText(formData, pdfLink)
             });
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                console.error('Error en el envío de email:', result);
+            if (result.error) {
+                logError('Resend Email Error', result.error);
                 return {
                     success: false,
-                    error: result.message || 'Error desconocido al enviar email'
+                    error: result.error
                 };
             }
 
@@ -181,7 +199,7 @@ export async function sendEmail(formData, pdfLink) {
                 data: result
             };
         } catch (error) {
-            console.error('Error de red al enviar email:', error);
+            logError('Resend Send Error', error);
             return {
                 success: false,
                 error: error.message
