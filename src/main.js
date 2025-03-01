@@ -137,10 +137,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const signatureDataUrl = signaturePad.toDataURL('image/png');
             formData.append('signature', signatureDataUrl);
 
-            // Enviar a Airtable
-            await sendToAirtable(formData);
+            // Obtener iniciales del nombre del invitado
+            const guestName = getFormFieldValue('input[name="Guest Name"]');
+            const guestInitials = guestName
+                .split(' ')
+                .map(name => name.charAt(0).toUpperCase())
+                .join('');
 
-            // Generar PDF
+            // Generar un Form Id único con iniciales
+            const formId = `LUXE-${guestInitials}-${new Date().getTime().toString().slice(-4)}-${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
+            formData.append('Form Id', formId);
+
+            // Generar PDF primero
             let pdfLink;
             try {
                 pdfLink = await generatePDF(this);
@@ -149,11 +157,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 pdfLink = await createPDF(formData);
             }
 
+            // Enviar a Airtable con el PDF Link
+            await sendToAirtable(formData, pdfLink);
+
             // Crear objeto de datos del formulario de manera segura
             const formDataObject = {
-                guestName: getFormFieldValue('input[name="Guest Name"]'),
+                guestName: guestName,
                 email: getFormFieldValue('input[name="Email"]'),
-                license: getFormFieldValue('input[name="License"]')
+                license: getFormFieldValue('input[name="License"]'),
+                issuingState: getFormFieldValue('input[name="Issuing State"]'),
+                address: getFormFieldValue('input[name="Address"]'),
+                signatureDate: new Date().toISOString().split('T')[0],
+                formId: formId
             };
 
             console.log('Datos del formulario:', formDataObject);

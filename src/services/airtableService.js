@@ -2,7 +2,7 @@
  * Servicio para enviar datos a Airtable
  */
 
-export async function sendToAirtable(formData, pdfLink, signatureUrl) {
+export async function sendToAirtable(formData, pdfLink) {
     try {
         // Asegurarnos de que los datos coincidan con los tipos de Airtable
         const airtableData = {
