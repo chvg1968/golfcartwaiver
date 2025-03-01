@@ -1,130 +1,189 @@
-import { generatePDF } from './services/pdfService';
-import { sendToAirtable } from './services/airtableService';
-import { sendEmail } from './services/emailService';
-import { SignatureComponent } from './components/signature';
-import { generateUUID, getInitials } from './utils/helpers';
+import SignaturePad from 'signature_pad';
+import { Spinner } from 'spin.js';
+import { sendEmail } from './services/emailService.js';
+import { generatePDF, downloadPDF, createPDF } from './services/pdfService.js';
+import { sendToAirtable } from './services/airtableService.js';
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar el pad de firma
-    const canvas = document.getElementById('signature-pad');
-    let signaturePad;
-    
-    if (canvas) {
-        signaturePad = new SignatureComponent(canvas);
-        console.log('Signature pad initialized');
-        
-        // Configurar el botón de limpiar firma
-        const clearButton = document.getElementById('clear-signature');
-        if (clearButton) {
-            clearButton.addEventListener('click', () => {
-                signaturePad.clear();
-                console.log('Signature cleared');
-            });
-        }
-    } else {
-        console.error('Canvas element not found');
+    // Configuración del spinner
+    const spinnerOptions = {
+        lines: 12, // Número de líneas
+        length: 38, // Longitud de cada línea
+        width: 17, // Ancho de cada línea
+        radius: 45, // Radio del círculo
+        scale: 1, // Factor de escala
+        corners: 1, // Redondez de las esquinas
+        speed: 1, // Velocidad de rotación
+        rotate: 0, // Rotación fija
+        animation: 'spinner-line-fade-quick', // Animación
+        direction: 1, // Dirección de rotación
+        color: '#007bff', // Color del spinner (azul)
+        fadeColor: 'transparent', // Color de desvanecimiento
+        top: '50%', // Posición vertical
+        left: '50%', // Posición horizontal
+        shadow: '0 0 1px transparent', // Sombra
+        zIndex: 2000, // Índice Z
+        className: 'spinner', // Clase CSS
+    };
+
+    // Inicializar spinner
+    const spinnerTarget = document.getElementById('loading-spinner');
+    console.log('Spinner target:', spinnerTarget);
+
+    if (!spinnerTarget) {
+        console.error('No se encontró el elemento para el spinner');
+        return;
     }
 
-    // Manejar el envío del formulario
-    document.getElementById('waiverForm').addEventListener('submit', async function(e) {
+    const spinner = new Spinner(spinnerOptions);
+    console.log('Spinner creado:', spinner);
+
+    // Añadir estilo para asegurar visibilidad
+    spinnerTarget.style.position = 'fixed';
+    spinnerTarget.style.top = '50%';
+    spinnerTarget.style.left = '50%';
+    spinnerTarget.style.transform = 'translate(-50%, -50%)';
+    spinnerTarget.style.zIndex = '9999';
+    spinnerTarget.style.display = 'none'; // Inicialmente oculto
+
+    // Inicializar el pad de firma
+    const signatureCanvas = document.getElementById('signature-pad');
+    if (!signatureCanvas) {
+        console.error('Canvas element not found');
+        return;
+    }
+
+    const clearSignatureBtn = document.getElementById('clear-signature');
+    if (!clearSignatureBtn) {
+        console.error('Clear signature button not found');
+        return;
+    }
+
+    const form = document.getElementById('waiverForm');
+    if (!form) {
+        console.error('Form element not found');
+        return;
+    }
+
+    const submitBtn = document.querySelector('.submit-btn');
+    if (!submitBtn) {
+        console.error('Submit button not found');
+        return;
+    }
+
+    // Inicializar Signature Pad
+    const signaturePad = new SignaturePad(signatureCanvas, {
+        minWidth: 1,
+        maxWidth: 3,
+        penColor: 'black',
+        backgroundColor: 'white'
+    });
+
+    // Ajustar tamaño del canvas
+    function resizeCanvas() {
+        const ratio = Math.max(window.devicePixelRatio, 1);
+        signatureCanvas.width = signatureCanvas.offsetWidth * ratio;
+        signatureCanvas.height = signatureCanvas.offsetHeight * ratio;
+        signatureCanvas.getContext('2d').scale(ratio, ratio);
+        signaturePad.clear();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Limpiar firma
+    clearSignatureBtn.addEventListener('click', () => {
+        signaturePad.clear();
+    });
+
+    // Función para mostrar spinner
+    function showSpinner() {
+        spinnerTarget.style.display = 'block';
+        spinner.spin(spinnerTarget);
+        console.log('Spinner mostrado');
+    }
+
+    // Función para ocultar spinner
+    function hideSpinner() {
+        spinnerTarget.style.display = 'none';
+        spinner.stop();
+        console.log('Spinner ocultado');
+    }
+
+    // Función para obtener valor de campo de formulario de manera segura
+    function getFormFieldValue(selector, defaultValue = '') {
+        const field = form.querySelector(selector);
+        return field ? field.value.trim() : defaultValue;
+    }
+
+    // Manejar envío de formulario
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         try {
-            // Validar el formulario
-            if (!validateForm(this)) {
-                return;
-            }
-
-            // Preparar datos del formulario
-            const formData = new FormData(this);
-            const guestName = formData.get('Guest Name');
-            const formId = getInitials(guestName) + '-' + generateUUID();
-            formData.append('Form Id', formId);
-
-            // Verificar y guardar la firma
-            if (signaturePad && signaturePad.isEmpty()) {
+            // Validar firma
+            if (signaturePad.isEmpty()) {
                 throw new Error('Por favor, proporciona tu firma');
             }
 
-            // Deshabilitar botón y mostrar spinner
-            const submitButton = document.getElementById('submit-button');
-            if (submitButton) {
-                submitButton.disabled = true;
-            }
-            const loadingSpinner = document.getElementById('loading-spinner');
-            if (loadingSpinner) {
-                loadingSpinner.classList.add('active');
+            // Mostrar spinner y deshabilitar botón
+            submitBtn.disabled = true;
+            showSpinner();
+
+            // Crear datos del formulario
+            const formData = new FormData(form);
+            
+            // Convertir firma a imagen
+            const signatureDataUrl = signaturePad.toDataURL('image/png');
+            formData.append('signature', signatureDataUrl);
+
+            // Enviar a Airtable
+            await sendToAirtable(formData);
+
+            // Generar PDF
+            let pdfLink;
+            try {
+                pdfLink = await generatePDF(this);
+            } catch (pdfError) {
+                console.warn('Error con generatePDF, intentando createPDF:', pdfError);
+                pdfLink = await createPDF(formData);
             }
 
-            // Generar y subir PDF con mejor manejo de errores
-            const pdfLink = await generatePDF(this).catch(error => {
-                console.error('Error en generación de PDF:', error);
-                throw new Error(`Error al generar el PDF: ${error.message}`);
-            });
-
-            if (!pdfLink) {
-                throw new Error('No se pudo obtener el enlace del PDF');
-            }
-
-            // Crear objeto de datos del formulario
+            // Crear objeto de datos del formulario de manera segura
             const formDataObject = {
-                guestName: formData.get('Guest Name'),
-                license: formData.get('License'),
-                issuingState: formData.get('Issuing State'),
-                address: formData.get('Address'),
-                signatureDate: formData.get('Signature Date'),
-                formId: `CV-${Date.now().toString(36)}`
+                guestName: getFormFieldValue('input[name="Guest Name"]'),
+                email: getFormFieldValue('input[name="Email"]'),
+                license: getFormFieldValue('input[name="License"]')
             };
 
             console.log('Datos del formulario:', formDataObject);
 
-            // Enviar datos a Airtable
-            await sendToAirtable(formData, pdfLink);
-
             // Enviar correo electrónico
-            const emailResult = await sendEmail(formDataObject, pdfLink);
-            
-            // Mostrar mensaje de éxito y limpiar formulario
-            alert('Formulario enviado correctamente' + 
-                  (emailResult && emailResult.success === false ? '\n(Nota: El email de confirmación no pudo ser enviado)' : ''));
-            
-            this.reset();
-            signaturePad?.clear();
+            const result = await sendEmail(formDataObject, pdfLink);
 
+            if (result.success) {
+                // Descargar PDF de manera separada
+                if (pdfLink) {
+                    try {
+                        downloadPDF(pdfLink);
+                    } catch (downloadError) {
+                        console.error('Error al descargar PDF:', downloadError);
+                    }
+                }
+                
+                alert('Waiver enviado exitosamente');
+                form.reset();
+                signaturePad.clear();
+            } else {
+                alert(`Error al enviar waiver: ${result.error}`);
+            }
         } catch (error) {
             console.error('Error detallado al procesar el formulario:', error);
             alert(`Error: ${error.message}`);
         } finally {
             // Restaurar botón y ocultar spinner
-            const submitButton = document.getElementById('submit-button');
-            if (submitButton) {
-                submitButton.disabled = false;
-            }
-            const loadingSpinner = document.getElementById('loading-spinner');
-            if (loadingSpinner) {
-                loadingSpinner.classList.remove('active');
-            }
+            submitBtn.disabled = false;
+            hideSpinner();
         }
     });
 });
-
-function validateForm(form) {
-    let isValid = true;
-    const requiredFields = form.querySelectorAll('input[required]');
-    
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            isValid = false;
-            field.classList.add('error');
-            console.error(`Campo requerido vacío: ${field.name}`);
-        } else {
-            field.classList.remove('error');
-        }
-    });
-
-    if (!isValid) {
-        alert('Por favor, completa todos los campos requeridos');
-    }
-
-    return isValid;
-}

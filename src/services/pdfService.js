@@ -2,6 +2,65 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase, uploadPDF } from '../utils/supabaseClient';
 
+// Función para generar PDF sin descargar inmediatamente
+export async function createPDF(formData) {
+    try {
+        // Convertir datos de FormData a objeto si es necesario
+        const data = formData instanceof FormData 
+            ? Object.fromEntries(formData.entries())
+            : formData;
+
+        // Crear documento PDF
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        // Configurar estilos de fuente
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+
+        // Añadir título
+        doc.setFontSize(16);
+        doc.text('Golf Cart Liability Waiver', 105, 20, { align: 'center' });
+
+        // Añadir detalles del formulario
+        doc.setFontSize(12);
+        const startY = 40;
+        const lineHeight = 10;
+
+        const fields = [
+            { label: 'Nombre', value: data['Guest Name'] || 'No especificado' },
+            { label: 'Licencia', value: data['License'] || 'No especificado' },
+            { label: 'Estado que Emite', value: data['Issuing State'] || 'No especificado' },
+            { label: 'Dirección', value: data['Address'] || 'No especificada' },
+            { label: 'Fecha de Firma', value: data['Signature Date'] || new Date().toLocaleDateString() }
+        ];
+
+        fields.forEach((field, index) => {
+            doc.text(`${field.label}: ${field.value}`, 20, startY + index * lineHeight);
+        });
+
+        // Generar un nombre de archivo único
+        const fileName = `waiver_${Date.now()}.pdf`;
+
+        // Convertir PDF a Blob
+        const pdfBlob = doc.output('blob');
+
+        // Crear URL temporal para el PDF
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        // Devolver la URL del PDF sin descargar
+        return pdfUrl;
+
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        throw error;
+    }
+}
+
+// Función de generación de PDF compatible con el código anterior
 export async function generatePDF(formElement) {
     try {
         await document.fonts.ready;
@@ -129,7 +188,7 @@ export async function generatePDF(formElement) {
         // Limpiar
         document.body.removeChild(tempContainer);
 
-        // Guardar localmente y subir a Supabase
+        // Generar un nombre de archivo único
         const fileName = `waiver_${Date.now()}.pdf`;
 
         // Comprimir el PDF antes de guardarlo
@@ -138,10 +197,7 @@ export async function generatePDF(formElement) {
             compressPdf: true
         });
 
-        // Descarga local
-        pdf.save(fileName);
-
-        // Subir a Supabase usando la función helper mejorada
+        // Subir a Supabase usando la función helper
         try {
             const publicUrl = await uploadPDF(fileName, compressedPdf);
             
@@ -155,20 +211,23 @@ export async function generatePDF(formElement) {
             console.error('Error inesperado al subir PDF:', uploadError);
             return null;
         }
+
     } catch (error) {
         console.error('Error en generación de PDF:', error);
         throw error;
     }
 }
 
-// Ejemplo de uso
-async function handlePDFUpload(pdfBlob) {
+// Función para descargar PDF (opcional, si se necesita)
+export function downloadPDF(pdfUrl, fileName = 'waiver.pdf') {
     try {
-        const fileName = `waiver_${Date.now()}.pdf`;
-        const publicUrl = await uploadPDF(fileName, pdfBlob);
-        return publicUrl;
+        const link = document.createElement('a');
+        link.href = pdfUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     } catch (error) {
-        console.error('Error en la subida del PDF:', error);
-        throw error;
+        console.error('Error al descargar PDF:', error);
     }
 }
