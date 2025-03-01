@@ -20,11 +20,10 @@ export async function sendEmail(formData, pdfLink) {
         try {
             const response = await fetch('https://golfcartwaiver-server.onrender.com/api/send-waiver-email', {
               method: 'POST',
-              credentials: 'include', // Important for CORS with credentials
+              credentials: 'include', // Importante para credenciales CORS
               headers: {
                 'Content-Type': 'application/json',
-                // Add any other necessary headers
-                'Accept': 'application/json'
+                'Origin': 'https://golf-cart-waiver.netlify.app'
               },
               body: JSON.stringify(emailPayload)
             });
