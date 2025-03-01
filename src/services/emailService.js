@@ -14,23 +14,23 @@ export async function sendEmail(formData, pdfLink) {
         // Validación inicial de datos
         if (!formData || Object.keys(formData).length === 0) {
             logError('Input Validation', 'Datos del formulario vacíos');
-            return { 
-                success: false, 
-                error: 'Datos del formulario incompletos' 
+            return {
+                success: false,
+                error: 'Datos del formulario incompletos'
             };
         }
 
         if (!pdfLink) {
             logError('Input Validation', 'Enlace de PDF no proporcionado');
-            return { 
-                success: false, 
-                error: 'Enlace de PDF no encontrado' 
+            return {
+                success: false,
+                error: 'Enlace de PDF no encontrado'
             };
         }
 
         // Convertir entrada a objeto plano
-        const formDataObject = formData instanceof FormData 
-            ? Object.fromEntries(formData.entries()) 
+        const formDataObject = formData instanceof FormData
+            ? Object.fromEntries(formData.entries())
             : formData;
 
         // Preparar payload
@@ -50,10 +50,13 @@ export async function sendEmail(formData, pdfLink) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'Origin': window.location.origin // Asegura que el origen se envíe explícitamente
                 },
                 body: JSON.stringify(emailPayload),
-                signal: controller.signal
+                signal: controller.signal,
+                credentials: 'include', // Incluir cookies si es necesario
+                mode: 'cors' // Asegúrate de que esté en modo CORS
             });
 
             clearTimeout(timeoutId);
@@ -79,7 +82,6 @@ export async function sendEmail(formData, pdfLink) {
                 message: 'Email enviado exitosamente',
                 data: result
             };
-
         } catch (fetchError) {
             // Manejo específico de errores de red
             logError('Network Error', fetchError);
@@ -99,7 +101,6 @@ export async function sendEmail(formData, pdfLink) {
                 details: fetchError.message
             };
         }
-
     } catch (generalError) {
         // Capturar cualquier error no manejado
         logError('Unhandled Error', generalError);
