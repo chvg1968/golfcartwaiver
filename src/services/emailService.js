@@ -1,97 +1,113 @@
 export async function sendEmail(formData, pdfLink) {
+    // Función de registro de errores centralizada
+    const logError = (context, error) => {
+        console.error(`[Email Service - ${context}]`, {
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : error,
+            stack: error instanceof Error ? error.stack : 'No stack trace',
+            formData: formData ? Object.keys(formData) : 'No form data',
+            pdfLink: pdfLink || 'No PDF link'
+        });
+    };
+
     try {
+        // Validación inicial de datos
+        if (!formData || Object.keys(formData).length === 0) {
+            logError('Input Validation', 'Datos del formulario vacíos');
+            return { 
+                success: false, 
+                error: 'Datos del formulario incompletos' 
+            };
+        }
+
+        if (!pdfLink) {
+            logError('Input Validation', 'Enlace de PDF no proporcionado');
+            return { 
+                success: false, 
+                error: 'Enlace de PDF no encontrado' 
+            };
+        }
+
         // Convertir entrada a objeto plano
         const formDataObject = formData instanceof FormData 
             ? Object.fromEntries(formData.entries()) 
             : formData;
 
-        // Validación de datos de entrada
-        if (!formDataObject || !pdfLink) {
-            console.error('Datos de entrada incompletos', {
-                formData: formDataObject,
-                pdfLink: pdfLink
-            });
-            throw new Error('Datos de entrada incompletos para envío de email');
-        }
-
-        // Log de todos los campos del formulario con más detalle
-        console.log('Datos del formulario completos:', JSON.stringify(formDataObject, null, 2));
-        console.log('Enlace PDF completo:', pdfLink);
-
-        // Preparar datos para enviar a la función serverless
+        // Preparar payload
         const emailPayload = {
             formData: formDataObject,
             pdfLink: pdfLink
         };
 
-        console.log('Payload completo para envío:', JSON.stringify(emailPayload, null, 2));
+        console.log('Payload para envío de email:', JSON.stringify(emailPayload, null, 2));
 
         try {
+            // Configuración de timeout y control de señal
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 segundos
 
             const response = await fetch('https://golfcartwaiver-server.onrender.com/api/send-waiver-email', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify(emailPayload),
-              signal: controller.signal
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(emailPayload),
+                signal: controller.signal
             });
-            
+
             clearTimeout(timeoutId);
 
-            // Registro detallado de la respuesta
-            console.log('Respuesta del servidor - Detalles completos:', {
-                status: response.status,
-                statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries())
-            });
-            
-            let result;
-            try {
-                result = await response.json();
-            } catch (parseError) {
-                console.error('Error parseando respuesta JSON:', {
-                    message: parseError.message,
-                    responseText: await response.text()
-                });
-                throw parseError;
-            }
-
-            console.log('Respuesta completa del servidor:', result);
-
+            // Manejar respuestas no exitosas sin lanzar una excepción
             if (!response.ok) {
-                console.error('Error en la respuesta del servidor:', {
-                    status: response.status,
-                    result: result
-                });
-                throw new Error(`Error al enviar email: ${response.status} - ${JSON.stringify(result)}`);
+                const errorText = await response.text();
+                logError('Server Response', `Status ${response.status}: ${errorText}`);
+                
+                return {
+                    success: false,
+                    error: `Error en el servidor: ${response.status}`,
+                    details: errorText
+                };
             }
 
-            return result;
-        } catch (error) {
-            console.error('Error detallado al enviar el formulario:', {
-                name: error.name,
-                message: error.message,
-                stack: error.stack
-            });
+            // Parsear respuesta JSON
+            const result = await response.json();
+            console.log('Respuesta de envío de email:', result);
 
-            // Manejar específicamente errores de red o timeout
-            if (error.name === 'AbortError') {
-                throw new Error('La solicitud de envío de email ha excedido el tiempo límite');
+            return {
+                success: true,
+                message: 'Email enviado exitosamente',
+                data: result
+            };
+
+        } catch (fetchError) {
+            // Manejo específico de errores de red
+            logError('Network Error', fetchError);
+
+            // Clasificar tipos de errores
+            if (fetchError.name === 'AbortError') {
+                return {
+                    success: false,
+                    error: 'Tiempo de espera agotado',
+                    details: 'La solicitud de email excedió el tiempo límite'
+                };
             }
 
-            throw error;
+            return {
+                success: false,
+                error: 'Error de red',
+                details: fetchError.message
+            };
         }
 
-    } catch (error) {
-        console.error('Error general enviando email:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
-        throw error;
+    } catch (generalError) {
+        // Capturar cualquier error no manejado
+        logError('Unhandled Error', generalError);
+
+        return {
+            success: false,
+            error: 'Error inesperado',
+            details: generalError.message
+        };
     }
 }
