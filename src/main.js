@@ -46,6 +46,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Por favor, proporciona tu firma');
             }
 
+            // Deshabilitar botón y mostrar spinner
+            const submitButton = document.getElementById('submit-button');
+            if (submitButton) {
+                submitButton.disabled = true;
+            }
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+                loadingSpinner.classList.add('active');
+            }
+
             // Generar y subir PDF con mejor manejo de errores
             const pdfLink = await generatePDF(this).catch(error => {
                 console.error('Error en generación de PDF:', error);
@@ -84,6 +94,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error detallado al procesar el formulario:', error);
             alert(`Error: ${error.message}`);
+        } finally {
+            // Restaurar botón y ocultar spinner
+            const submitButton = document.getElementById('submit-button');
+            if (submitButton) {
+                submitButton.disabled = false;
+            }
+            const loadingSpinner = document.getElementById('loading-spinner');
+            if (loadingSpinner) {
+                loadingSpinner.classList.remove('active');
+            }
         }
     });
 });
