@@ -17,19 +17,14 @@ export async function sendEmail(formData, pdfLink) {
 
         console.log('Payload completo para envío:', JSON.stringify(emailPayload, null, 2));
 
-        // Selección dinámica de URL de backend
-        const API_BASE_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3001/api'  // URL de tu backend local
-            : 'https://golfcartwaiver-server.onrender.com/api';
-
-        const API_URL = `${API_BASE_URL}/send-waiver-email`;
-
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch('https://golfcartwaiver-server.onrender.com/api/send-waiver-email', {
               method: 'POST',
-              credentials: 'include', // Importante para CORS con credenciales
+              credentials: 'include', // Important for CORS with credentials
               headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                // Add any other necessary headers
+                'Accept': 'application/json'
               },
               body: JSON.stringify(emailPayload)
             });
