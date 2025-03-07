@@ -76,13 +76,24 @@ export async function generatePDF(formElement) {
         const elementsToRemove = formClone.querySelectorAll('button, .hide-in-pdf, [type="submit"], [type="button"]');
         elementsToRemove.forEach(el => el.parentNode && el.parentNode.removeChild(el));
         
-        // Optimizar imágenes en el clon
+        // Optimizar imágenes en el clon con especial atención al logo
         const images = formClone.querySelectorAll('img');
         images.forEach(img => {
-            // Reducir calidad de las imágenes si no son la firma
-            if (!img.closest('.signature-container')) {
-                img.style.maxWidth = '200px'; // Limitar tamaño máximo aún más
-                img.style.maxHeight = '80px'; // Limitar altura también
+            // Tratamiento especial para el logo (asumiendo que es la primera imagen o tiene una clase/id específico)
+            if (img.src && (img.src.includes('logo') || img.alt && img.alt.includes('LUXE') || img === images[0])) {
+                // Preservar proporciones del logo
+                img.style.maxWidth = '150px';
+                img.style.height = 'auto';
+                img.style.objectFit = 'contain';
+                img.style.display = 'block';
+                img.style.margin = '0 auto 10px auto'; // Centrar logo
+                img.style.imageRendering = 'high-quality';
+            } 
+            // Otras imágenes que no son la firma
+            else if (!img.closest('.signature-container')) {
+                img.style.maxWidth = '180px';
+                img.style.maxHeight = '70px';
+                img.style.objectFit = 'contain';
                 img.style.imageRendering = 'crisp-edges';
             }
         });
@@ -109,7 +120,7 @@ export async function generatePDF(formElement) {
             }
         }
 
-        // Crear contenedor temporal para renderizar (optimizado para carta)
+        // Crear contenedor temporal para renderizar (optimizado para carta con diseño centrado)
         const tempContainer = document.createElement('div');
         Object.assign(tempContainer.style, {
             position: 'absolute',
@@ -118,38 +129,59 @@ export async function generatePDF(formElement) {
             width: '215.9mm', // Ancho exacto tamaño carta (8.5 pulgadas)
             maxHeight: '279.4mm', // Alto exacto tamaño carta (11 pulgadas)
             background: 'white',
-            padding: '10mm', // Reducir márgenes para más espacio
-            fontSize: '9px', // Reducir aún más el tamaño de fuente
-            lineHeight: '1.2', // Interlineado más compacto
+            padding: '15mm 25mm', // Márgenes laterales más amplios para centrar contenido
+            fontSize: '10px', // Tamaño de fuente ligeramente mayor para mejor legibilidad
+            lineHeight: '1.3', // Interlineado más legible
             fontFamily: 'Arial, sans-serif',
             boxSizing: 'border-box', // Incluir padding en el cálculo del tamaño
-            overflow: 'hidden' // Asegurar que no haya desbordamiento
+            overflow: 'hidden', // Asegurar que no haya desbordamiento
+            maxWidth: '170mm', // Limitar ancho máximo para contenido más centrado
+            margin: '0 auto' // Centrar el contenedor
         });
         
-        // Aplicar compresión extrema a todos los elementos
+        // Aplicar estilo más elegante y centrado a todos los elementos
         const allElements = formClone.querySelectorAll('*');
         allElements.forEach(el => {
             if (el.style) {
-                // Reducir drásticamente todos los espacios
-                el.style.margin = '2px 0';
+                // Espaciado moderado pero compacto
+                el.style.margin = '3px 0';
                 el.style.padding = '2px 0';
-                el.style.lineHeight = '1.2';
+                el.style.lineHeight = '1.3';
+                el.style.maxWidth = '100%'; // Evitar que los elementos se extiendan demasiado
                 
-                // Reducir tamaños de fuente para encabezados
+                // Centrar elementos de título y encabezados
                 if (el.tagName && el.tagName.match(/^H[1-6]$/)) {
-                    el.style.fontSize = el.tagName === 'H1' ? '14px' : 
-                                        el.tagName === 'H2' ? '12px' : '10px';
-                    el.style.marginTop = '5px';
-                    el.style.marginBottom = '5px';
+                    el.style.fontSize = el.tagName === 'H1' ? '16px' : 
+                                        el.tagName === 'H2' ? '14px' : '12px';
+                    el.style.marginTop = '8px';
+                    el.style.marginBottom = '6px';
+                    el.style.textAlign = 'center';
+                    el.style.fontWeight = 'bold';
                 }
                 
-                // Comprimir párrafos
+                // Mejorar párrafos
                 if (el.tagName === 'P') {
-                    el.style.marginTop = '3px';
-                    el.style.marginBottom = '3px';
+                    el.style.marginTop = '4px';
+                    el.style.marginBottom = '4px';
+                    el.style.textAlign = 'justify'; // Texto justificado para mejor apariencia
+                    el.style.maxWidth = '100%'; // Limitar ancho
+                }
+                
+                // Centrar div principales
+                if (el.tagName === 'DIV' && (!el.parentElement || el.parentElement.tagName === 'BODY' || el.parentElement.tagName === 'FORM')) {
+                    el.style.margin = '0 auto';
+                    el.style.maxWidth = '100%';
                 }
             }
         });
+        
+        // Buscar el contenedor principal del formulario y centrarlo
+        const mainContainer = formClone.querySelector('form') || formClone.querySelector('div');
+        if (mainContainer) {
+            mainContainer.style.width = '100%';
+            mainContainer.style.maxWidth = '160mm'; // Limitar ancho para centrar
+            mainContainer.style.margin = '0 auto';
+        }
         
         tempContainer.appendChild(formClone);
         document.body.appendChild(tempContainer);
@@ -158,15 +190,15 @@ export async function generatePDF(formElement) {
         const containerHeight = tempContainer.offsetHeight;
         console.log('Altura del contenedor antes de renderizar:', containerHeight, 'px');
         
-        // Si el contenedor es demasiado alto, aplicar compresión adicional
+        // Si el contenedor es demasiado alto, aplicar compresión adicional pero manteniendo el diseño
         if (containerHeight > 1056) { // 11 pulgadas a 96 DPI
             console.log('Aplicando compresión adicional para ajustar a una página');
-            // Reducir aún más los espacios y tamaños
+            // Reducir espacios pero mantener legibilidad
             allElements.forEach(el => {
                 if (el.style) {
-                    el.style.margin = '1px 0';
+                    el.style.margin = '2px 0';
                     el.style.padding = '1px 0';
-                    el.style.lineHeight = '1.1';
+                    el.style.lineHeight = '1.2';
                 }
             });
             
@@ -178,8 +210,9 @@ export async function generatePDF(formElement) {
                 if (container) container.style.maxHeight = '60px';
             }
             
-            // Reducir aún más el tamaño de fuente global
-            tempContainer.style.fontSize = '8px';
+            // Reducir tamaño de fuente global pero mantener legibilidad
+            tempContainer.style.fontSize = '9px';
+            tempContainer.style.padding = '12mm 20mm'; // Reducir márgenes pero mantener centrado
         }
         
         // Configuración altamente optimizada para html2canvas (ajustada para carta)
@@ -219,9 +252,9 @@ export async function generatePDF(formElement) {
             hotfixes: ['px_scaling'] // Corregir problemas de escala
         });
         
-        // Dimensiones exactas de carta con márgenes mínimos
-        const pageWidth = pdf.internal.pageSize.getWidth() - 15; // Reducir márgenes a 7.5mm por lado
-        const pageHeight = pdf.internal.pageSize.getHeight() - 15; // Reducir márgenes a 7.5mm por lado
+        // Dimensiones exactas de carta con márgenes balanceados para un diseño centrado
+        const pageWidth = pdf.internal.pageSize.getWidth() - 40; // Márgenes laterales más amplios (20mm por lado)
+        const pageHeight = pdf.internal.pageSize.getHeight() - 30; // Márgenes verticales (15mm por lado)
         
         // Intentar ajustar todo a una sola página
         const canvasWidth = canvas.width;
@@ -245,9 +278,9 @@ export async function generatePDF(formElement) {
         // Añadir imagen al PDF con márgenes mínimos
         const imgData = canvas.toDataURL('image/jpeg', 0.8); // Calidad balanceada para reducir tamaño
         
-        // Posicionar en la página con márgenes mínimos
-        const xPos = 7.5; // 7.5mm de margen izquierdo
-        const yPos = 7.5; // 7.5mm de margen superior
+        // Posicionar en la página centrado con márgenes balanceados
+        const xPos = 20; // 20mm de margen izquierdo
+        const yPos = 15; // 15mm de margen superior
         
         // Usar compressionLevel para reducir el tamaño del PDF
         pdf.addImage(imgData, 'JPEG', xPos, yPos, pdfWidth, pdfHeight, null, 'FAST');
