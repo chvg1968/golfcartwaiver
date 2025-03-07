@@ -267,6 +267,7 @@ export async function generatePDF(formElement) {
             // Reducir tamaño de fuente global pero mantener legibilidad
             tempContainer.style.fontSize = '9px';
             tempContainer.style.padding = '8mm 10mm'; // Márgenes balanceados
+        }
         
         // Ajustar aún más los encabezados
         const headings = formClone.querySelectorAll('h1, h2, h3, h4, h5, h6');
