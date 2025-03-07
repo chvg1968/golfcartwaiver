@@ -72,24 +72,29 @@ export async function generatePDF(formElement) {
         // Crear una copia del formulario para manipular
         const formClone = formElement.cloneNode(true);
         
+        // Eliminar elementos innecesarios o redundantes para el PDF
+        const elementsToRemove = formClone.querySelectorAll('button, .hide-in-pdf, [type="submit"], [type="button"]');
+        elementsToRemove.forEach(el => el.parentNode && el.parentNode.removeChild(el));
+        
         // Optimizar imágenes en el clon
         const images = formClone.querySelectorAll('img');
         images.forEach(img => {
             // Reducir calidad de las imágenes si no son la firma
             if (!img.closest('.signature-container')) {
-                img.style.maxWidth = '300px'; // Limitar tamaño máximo
+                img.style.maxWidth = '200px'; // Limitar tamaño máximo aún más
+                img.style.maxHeight = '80px'; // Limitar altura también
                 img.style.imageRendering = 'crisp-edges';
             }
         });
         
-        // Restaurar la firma en el clon con altura reducida
+        // Restaurar la firma en el clon con altura muy reducida
         const clonedSignaturePad = formClone.querySelector('#signature-pad');
         if (clonedSignaturePad && signatureDataUrl) {
             // Reemplazar el canvas con una imagen para mejor rendimiento
             const signatureImg = document.createElement('img');
             signatureImg.src = signatureDataUrl;
             signatureImg.style.width = '100%';
-            signatureImg.style.height = '80px'; // Reducir altura de la firma
+            signatureImg.style.height = '60px'; // Reducir aún más la altura de la firma
             signatureImg.style.objectFit = 'contain'; // Mantener proporción
             signatureImg.style.border = '1px solid #000';
             clonedSignaturePad.parentNode.replaceChild(signatureImg, clonedSignaturePad);
@@ -98,7 +103,9 @@ export async function generatePDF(formElement) {
             const signatureContainer = signatureImg.closest('.signature-container');
             if (signatureContainer) {
                 signatureContainer.style.height = 'auto';
-                signatureContainer.style.maxHeight = '100px'; // Limitar altura máxima
+                signatureContainer.style.maxHeight = '70px'; // Limitar altura máxima aún más
+                signatureContainer.style.marginBottom = '5px';
+                signatureContainer.style.marginTop = '5px';
             }
         }
 
@@ -111,31 +118,73 @@ export async function generatePDF(formElement) {
             width: '215.9mm', // Ancho exacto tamaño carta (8.5 pulgadas)
             maxHeight: '279.4mm', // Alto exacto tamaño carta (11 pulgadas)
             background: 'white',
-            padding: '12.7mm', // Márgenes de 0.5 pulgadas
-            fontSize: '10px', // Tamaño de fuente reducido para ajustar mejor
-            lineHeight: '1.3', // Interlineado más compacto
+            padding: '10mm', // Reducir márgenes para más espacio
+            fontSize: '9px', // Reducir aún más el tamaño de fuente
+            lineHeight: '1.2', // Interlineado más compacto
             fontFamily: 'Arial, sans-serif',
-            boxSizing: 'border-box' // Incluir padding en el cálculo del tamaño
+            boxSizing: 'border-box', // Incluir padding en el cálculo del tamaño
+            overflow: 'hidden' // Asegurar que no haya desbordamiento
         });
         
-        // Compactar elementos del formulario para ajustar mejor a una página
-        const formElements = formClone.querySelectorAll('div, p, h1, h2, h3, input, textarea, label');
-        formElements.forEach(el => {
-            // Reducir márgenes y padding
+        // Aplicar compresión extrema a todos los elementos
+        const allElements = formClone.querySelectorAll('*');
+        allElements.forEach(el => {
             if (el.style) {
-                el.style.marginBottom = el.style.marginBottom ? '0.3em' : '';
-                el.style.marginTop = el.style.marginTop ? '0.3em' : '';
-                el.style.paddingBottom = el.style.paddingBottom ? '0.2em' : '';
-                el.style.paddingTop = el.style.paddingTop ? '0.2em' : '';
+                // Reducir drásticamente todos los espacios
+                el.style.margin = '2px 0';
+                el.style.padding = '2px 0';
+                el.style.lineHeight = '1.2';
+                
+                // Reducir tamaños de fuente para encabezados
+                if (el.tagName && el.tagName.match(/^H[1-6]$/)) {
+                    el.style.fontSize = el.tagName === 'H1' ? '14px' : 
+                                        el.tagName === 'H2' ? '12px' : '10px';
+                    el.style.marginTop = '5px';
+                    el.style.marginBottom = '5px';
+                }
+                
+                // Comprimir párrafos
+                if (el.tagName === 'P') {
+                    el.style.marginTop = '3px';
+                    el.style.marginBottom = '3px';
+                }
             }
         });
         
         tempContainer.appendChild(formClone);
         document.body.appendChild(tempContainer);
 
+        // Medir el contenedor para verificar si necesitamos compresión adicional
+        const containerHeight = tempContainer.offsetHeight;
+        console.log('Altura del contenedor antes de renderizar:', containerHeight, 'px');
+        
+        // Si el contenedor es demasiado alto, aplicar compresión adicional
+        if (containerHeight > 1056) { // 11 pulgadas a 96 DPI
+            console.log('Aplicando compresión adicional para ajustar a una página');
+            // Reducir aún más los espacios y tamaños
+            allElements.forEach(el => {
+                if (el.style) {
+                    el.style.margin = '1px 0';
+                    el.style.padding = '1px 0';
+                    el.style.lineHeight = '1.1';
+                }
+            });
+            
+            // Reducir aún más el tamaño de la firma si existe
+            const signatureImg = formClone.querySelector('.signature-container img');
+            if (signatureImg) {
+                signatureImg.style.height = '50px';
+                const container = signatureImg.closest('.signature-container');
+                if (container) container.style.maxHeight = '60px';
+            }
+            
+            // Reducir aún más el tamaño de fuente global
+            tempContainer.style.fontSize = '8px';
+        }
+        
         // Configuración altamente optimizada para html2canvas (ajustada para carta)
         const html2canvasOptions = {
-            scale: 2, // Mayor escala para mejor nitidez
+            scale: 1.5, // Reducir escala para mejor rendimiento y ajuste
             useCORS: true,
             logging: false,
             backgroundColor: 'white',
@@ -170,9 +219,9 @@ export async function generatePDF(formElement) {
             hotfixes: ['px_scaling'] // Corregir problemas de escala
         });
         
-        // Dimensiones exactas de carta con márgenes
-        const pageWidth = pdf.internal.pageSize.getWidth() - 25.4; // 1 pulgada de margen total (0.5 en cada lado)
-        const pageHeight = pdf.internal.pageSize.getHeight() - 25.4; // 1 pulgada de margen total (0.5 en cada lado)
+        // Dimensiones exactas de carta con márgenes mínimos
+        const pageWidth = pdf.internal.pageSize.getWidth() - 15; // Reducir márgenes a 7.5mm por lado
+        const pageHeight = pdf.internal.pageSize.getHeight() - 15; // Reducir márgenes a 7.5mm por lado
         
         // Intentar ajustar todo a una sola página
         const canvasWidth = canvas.width;
@@ -183,8 +232,7 @@ export async function generatePDF(formElement) {
         const pdfWidth = pageWidth;
         let pdfHeight = pdfWidth / ratio;
         
-        // Forzar a una sola página si es posible
-        let pageCount = 1;
+        // Forzar a una sola página siempre
         let scale = 1;
         
         if (pdfHeight > pageHeight) {
@@ -194,13 +242,14 @@ export async function generatePDF(formElement) {
             console.log('Escalando contenido para ajustar a una página:', scale);
         }
         
-        // Añadir imagen al PDF con márgenes precisos
-        const imgData = canvas.toDataURL('image/jpeg', 0.85); // Mayor calidad
+        // Añadir imagen al PDF con márgenes mínimos
+        const imgData = canvas.toDataURL('image/jpeg', 0.8); // Calidad balanceada para reducir tamaño
         
-        // Centrar en la página
-        const xPos = (pdf.internal.pageSize.getWidth() - pdfWidth) / 2;
-        const yPos = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
+        // Posicionar en la página con márgenes mínimos
+        const xPos = 7.5; // 7.5mm de margen izquierdo
+        const yPos = 7.5; // 7.5mm de margen superior
         
+        // Usar compressionLevel para reducir el tamaño del PDF
         pdf.addImage(imgData, 'JPEG', xPos, yPos, pdfWidth, pdfHeight, null, 'FAST');
         
         // Añadir metadatos al PDF
@@ -209,6 +258,15 @@ export async function generatePDF(formElement) {
             subject: 'Liability Waiver',
             creator: 'LUXE PROPERTIES',
             author: 'LUXE PROPERTIES'
+        });
+        
+        // Verificar si todo el contenido cabe en una página
+        console.log('Dimensiones finales del PDF:', {
+            pdfWidth: `${pdfWidth}mm`,
+            pdfHeight: `${pdfHeight}mm`,
+            pageHeight: `${pageHeight}mm`,
+            scale: scale,
+            ratio: ratio
         });
         
         // Limpiar
