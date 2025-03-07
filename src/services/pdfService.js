@@ -186,7 +186,7 @@ export async function generatePDF(formElement) {
         const boldText = `I voluntarily agree to accept the risks of using a golf cart and on behalf of myself, my personal representatives and my heirs hereby voluntarily release the Owner and Property manager of the Unit at Bahia Beach Resort Community, and its directors, officers, employees, and agents from any and all claims, actions, causes of actions, suits, judgments and demands for bodily injury, property damage, loss of life and/or loss of services, in law or equity, that may in any way or manner arise out of use of the golf cart.`;
         
         yPos = addMultiLineText(boldText, margin, yPos + 1, contentWidth, 4);
-        yPos += 3; // Reducido para ahorrar espacio
+        yPos += 8; // Aumentado para evitar traslape con los checkboxes
         
         // Volver a fuente normal
         pdf.setFont('helvetica', 'normal');
@@ -206,8 +206,8 @@ export async function generatePDF(formElement) {
         // Implementar estructura de tabla para checkboxes, párrafos e iniciales
         // Definir anchos de columnas
         const colCheckbox = 5;  // Ancho de columna de checkbox
-        const colInitial = 35;  // Ancho de columna de INITIAL
-        const colText = contentWidth - colCheckbox - colInitial; // Ancho de columna de texto
+        const colInitial = 25;  // Ancho de columna de INITIAL (reducido para mejor alineación)
+        const colText = contentWidth - colCheckbox - colInitial - 5; // Ancho de columna de texto con margen adicional
         
         // Altura inicial para la tabla
         let tableYPos = yPos;
@@ -241,8 +241,8 @@ export async function generatePDF(formElement) {
             const newYPos = addMultiLineText(item, textX, tableYPos, colText, 4);
             
             // COLUMNA 3: INITIAL y caja de iniciales
-            // Calcular posición para INITIAL
-            const initialX = margin + colCheckbox + colText;
+            // Calcular posición para INITIAL - alineado con el final del texto
+            const initialX = margin + colCheckbox + colText + 5;
             
             // Añadir etiqueta "INITIAL"
             pdf.setFontSize(9);
@@ -312,44 +312,46 @@ export async function generatePDF(formElement) {
         // Actualizar posición Y para continuar
         tableYPos = Math.max(newYPos, tableYPos + 8) + 2;
         
-        // Continuar con el resto del documento usando el formato de tabla
-        // Texto adicional
+        // Continuar con el resto del documento sin checkbox adicional
+        tableYPos += 5; // Espacio adicional antes del siguiente texto
+        
+        // Texto adicional - sin checkbox
         pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'normal');
         const additionalText = `I am responsible for the possession/control of vehicle keys when not in use.`;
-        tableYPos = addMultiLineText(additionalText, margin + colCheckbox, tableYPos + 1, contentWidth - colCheckbox, 4) + 2;
+        tableYPos = addMultiLineText(additionalText, margin, tableYPos, contentWidth, 4) + 2;
         
-        // Texto en negrita para advertencia - en ROJO
+        // Texto en negrita para advertencia - en ROJO - sin checkbox
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const warningText = `Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death.`;
-        tableYPos = addMultiLineText(warningText, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
+        tableYPos = addMultiLineText(warningText, margin, tableYPos, contentWidth, 4) + 2;
         
-        // Volver a texto normal
+        // Volver a texto normal - sin checkbox
         pdf.setTextColor(0, 0, 0); // Volver a negro
         pdf.setFont('helvetica', 'normal');
         const normalText = `The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community.`;
-        tableYPos = addMultiLineText(normalText, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
+        tableYPos = addMultiLineText(normalText, margin, tableYPos, contentWidth, 4) + 2;
         
-        // Más texto en negrita - en ROJO
+        // Más texto en negrita - en ROJO - sin checkbox
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const moreWarning = `No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer.`;
-        tableYPos = addMultiLineText(moreWarning, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
+        tableYPos = addMultiLineText(moreWarning, margin, tableYPos, contentWidth, 4) + 2;
         
-        // Último párrafo normal y negrita
+        // Último párrafo normal y negrita - sin checkbox
         pdf.setTextColor(0, 0, 0); // Volver a negro
         pdf.setFont('helvetica', 'normal');
         const finalText = `In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun.`;
-        tableYPos = addMultiLineText(finalText, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
+        tableYPos = addMultiLineText(finalText, margin, tableYPos, contentWidth, 4) + 2;
         
         pdf.setFont('helvetica', 'bold');
         const finalBold = `I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME`;
-        tableYPos = addMultiLineText(finalBold, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
+        tableYPos = addMultiLineText(finalBold, margin, tableYPos, contentWidth, 4) + 2;
         
         // Añadir etiqueta "INITIAL" al final del último párrafo
-        // Calcular posición para INITIAL
-        const lastInitialX = margin + colCheckbox + colText;
+        // Calcular posición para INITIAL - alineado al final de la página
+        const lastInitialX = contentWidth - 20;
         
         // Añadir etiqueta "INITIAL"
         pdf.setFontSize(9);
