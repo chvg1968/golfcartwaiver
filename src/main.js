@@ -71,13 +71,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // Inicializar Signature Pad
-    const signaturePad = new SignaturePad(signatureCanvas, {
+    // Inicializar Signature Pad y hacerlo disponible globalmente
+    window.signaturePad = new SignaturePad(signatureCanvas, {
         minWidth: 1,
         maxWidth: 3,
         penColor: 'black',
         backgroundColor: 'white'
     });
+    
+    console.log('Signature Pad inicializado y disponible globalmente:', window.signaturePad);
 
     // Ajustar tamaño del canvas
     function resizeCanvas() {
@@ -122,9 +124,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Validar firma
-            if (signaturePad.isEmpty()) {
+            if (window.signaturePad.isEmpty()) {
                 throw new Error('Por favor, proporciona tu firma');
             }
+            
+            console.log('Firma validada correctamente');
 
             // Mostrar spinner y deshabilitar botón
             submitBtn.disabled = true;
@@ -133,9 +137,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Crear datos del formulario
             const formData = new FormData(form);
             
-            // Convertir firma a imagen
-            const signatureDataUrl = signaturePad.toDataURL('image/png');
+            // Convertir firma a imagen y guardarla en una variable global para acceso directo
+            const signatureDataUrl = window.signaturePad.toDataURL('image/png');
+            window.currentSignature = signatureDataUrl;
             formData.append('signature', signatureDataUrl);
+            
+            console.log('Firma capturada y guardada globalmente');
 
             // Obtener iniciales del nombre del invitado
             const guestName = getFormFieldValue('input[name="Guest Name"]');
@@ -188,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 alert('Waiver enviado exitosamente');
                 form.reset();
-                signaturePad.clear();
+                window.signaturePad.clear();
             } else {
                 alert(`Error al enviar waiver: ${result.error}`);
             }

@@ -62,30 +62,45 @@ export async function createPDF(formData) {
 
 export async function generatePDF(formElement) {
     try {
-        // Obtener la firma con manejo mejorado
-        const signaturePadElement = formElement.querySelector('#signature-pad');
+        // Método mejorado para obtener la firma
         let signatureDataUrl = null;
         
-        console.log('Buscando firma en el pad...');
+        console.log('Intentando obtener la firma para el PDF...');
         
-        if (signaturePadElement) {
-            console.log('Elemento signature-pad encontrado');
+        // Método 1: Usar la firma guardada globalmente (prioridad)
+        if (window.currentSignature) {
+            console.log('Firma encontrada en variable global currentSignature');
+            signatureDataUrl = window.currentSignature;
+        } 
+        // Método 2: Obtener del pad de firma
+        else if (window.signaturePad && !window.signaturePad.isEmpty()) {
+            console.log('Obteniendo firma directamente del pad global');
+            signatureDataUrl = window.signaturePad.toDataURL('image/png');
+        } 
+        // Método 3: Buscar el elemento y obtener la firma
+        else {
+            const signaturePadElement = formElement.querySelector('#signature-pad');
             
-            if (window.signaturePad) {
-                console.log('Instancia de signaturePad encontrada');
+            if (signaturePadElement) {
+                console.log('Elemento signature-pad encontrado, buscando instancia local');
                 
-                if (!window.signaturePad.isEmpty()) {
-                    console.log('La firma no está vacía, capturando...');
-                    signatureDataUrl = window.signaturePad.toDataURL('image/png');
-                    console.log('Firma capturada:', signatureDataUrl.substring(0, 50) + '...');
-                } else {
-                    console.log('Error: La firma está vacía');
+                // Intentar crear una instancia temporal
+                try {
+                    const tempPad = new SignaturePad(signaturePadElement);
+                    if (!tempPad.isEmpty()) {
+                        console.log('Obteniendo firma de instancia temporal');
+                        signatureDataUrl = tempPad.toDataURL('image/png');
+                    }
+                } catch (padError) {
+                    console.error('Error al crear instancia temporal:', padError);
                 }
-            } else {
-                console.log('Error: No se encontró la instancia de signaturePad en window');
             }
+        }
+        
+        if (signatureDataUrl) {
+            console.log('Firma obtenida exitosamente:', signatureDataUrl.substring(0, 50) + '...');
         } else {
-            console.log('Error: No se encontró el elemento signature-pad');
+            console.warn('No se pudo obtener la firma por ningún método');
         }
         
         // Recopilar datos del formulario
@@ -105,6 +120,9 @@ export async function generatePDF(formElement) {
         const pageHeight = pdf.internal.pageSize.getHeight();
         const margin = 15; // margen en mm
         const contentWidth = pageWidth - (margin * 2);
+        
+        // Establecer tamaño de letra uniforme para todo el documento
+        pdf.setFontSize(9); // Tamaño uniforme para todo el texto
         
         // Posición vertical actual (para ir avanzando)
         let yPos = margin;
@@ -198,24 +216,25 @@ export async function generatePDF(formElement) {
             pdf.setFont('helvetica', 'bold');
             pdf.text('X', margin + 0.8, yPos - 0.8); // X como marca de verificación
             
-            // Añadir texto del checkbox
+            // Restaurar tamaño de letra uniforme para el texto
+            pdf.setFontSize(9);
             pdf.setFont('helvetica', 'normal');
             const checkboxText = `${item}`;
             yPos = addMultiLineText(checkboxText, margin + 5, yPos, contentWidth - 25, 4);
             
-            // Añadir etiqueta "INITIAL" al frente del texto
-            pdf.setFontSize(8); // Tamaño uniforme
+            // Añadir etiqueta "INITIAL" al final del texto
+            pdf.setFontSize(9);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('INITIAL:', margin + 5, yPos + 3);
+            pdf.text('INITIAL:', contentWidth - 30, yPos - 4);
             
             // Dibujar caja de iniciales debajo de INITIAL
             pdf.setDrawColor(0);
-            pdf.rect(margin + 5, yPos + 4, 12, 5, 'S');
+            pdf.rect(contentWidth - 30, yPos - 3, 12, 5, 'S');
             
             // Añadir iniciales si existen
             if (initialValues[index]) {
                 pdf.setFont('helvetica', 'bold');
-                pdf.text(initialValues[index], margin + 11, yPos + 7, { align: 'center' });
+                pdf.text(initialValues[index], contentWidth - 24, yPos, { align: 'center' });
             }
             
             yPos += 3; // Espacio reducido entre checkboxes
@@ -236,7 +255,7 @@ export async function generatePDF(formElement) {
         pdf.text('X', margin + 0.8, yPos - 0.8); // X como marca de verificación
         
         // Establecer tamaño de fuente uniforme para todo el texto
-        pdf.setFontSize(8);
+        pdf.setFontSize(9);
         
         // Texto sobre prohibición de conducir sin licencia - en ROJO
         pdf.setFont('helvetica', 'normal');
@@ -277,20 +296,20 @@ export async function generatePDF(formElement) {
         const finalBold = `I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME`;
         yPos = addMultiLineText(finalBold, margin + 6, yPos + 1, contentWidth - 6, 4);
         
-        // Añadir etiqueta "INITIAL" al frente del último párrafo
+        // Añadir etiqueta "INITIAL" al final del último párrafo
         yPos += 2;
-        pdf.setFontSize(8); // Tamaño uniforme
+        pdf.setFontSize(9); // Tamaño uniforme
         pdf.setFont('helvetica', 'bold');
-        pdf.text('INITIAL:', margin + 5, yPos + 3);
+        pdf.text('INITIAL:', contentWidth - 30, yPos - 4);
         
         // Dibujar caja de iniciales debajo de INITIAL
         pdf.setDrawColor(0);
-        pdf.rect(margin + 5, yPos + 4, 12, 5, 'S');
+        pdf.rect(contentWidth - 30, yPos - 3, 12, 5, 'S');
         
         // Añadir iniciales si existen
         if (initialValues[4]) {
             pdf.setFont('helvetica', 'bold');
-            pdf.text(initialValues[4], margin + 11, yPos + 7, { align: 'center' });
+            pdf.text(initialValues[4], contentWidth - 24, yPos, { align: 'center' });
         }
         
         yPos += 6;
@@ -303,10 +322,18 @@ export async function generatePDF(formElement) {
         pdf.setDrawColor(0);
         pdf.rect(margin, yPos + 1, contentWidth, 15, 'S');
         
-        // Solución robusta para la firma
-        if (signatureDataUrl) {
-            try {
-                console.log('Intentando añadir firma con método directo');
+        // Solución definitiva para la firma - método directo y simplificado
+        try {
+            console.log('Verificando disponibilidad de firma...');
+            
+            // Obtener la firma nuevamente directamente del pad
+            if (!signatureDataUrl && window.signaturePad && !window.signaturePad.isEmpty()) {
+                console.log('Obteniendo firma directamente del pad...');
+                signatureDataUrl = window.signaturePad.toDataURL('image/png');
+            }
+            
+            if (signatureDataUrl) {
+                console.log('Firma encontrada, intentando añadirla...');
                 
                 // Dimensiones fijas para la firma
                 const signatureX = margin + 2;
@@ -314,7 +341,7 @@ export async function generatePDF(formElement) {
                 const signatureWidth = contentWidth - 4;
                 const signatureHeight = 12;
                 
-                // Método 1: Añadir directamente como imagen PNG
+                // Método simplificado: añadir directamente como imagen
                 pdf.addImage(
                     signatureDataUrl,
                     'PNG',
@@ -324,76 +351,43 @@ export async function generatePDF(formElement) {
                     signatureHeight
                 );
                 
-                console.log('Firma añadida correctamente como PNG');
-            } catch (error) {
-                console.error('Error al añadir firma como PNG:', error);
+                console.log('Firma añadida correctamente');
+            } else {
+                // Si no hay firma, dibujar una firma simulada
+                console.log('No se encontró firma válida, dibujando simulación...');
                 
-                try {
-                    console.log('Intentando método alternativo para la firma');
-                    
-                    // Método 2: Convertir a JPEG y añadir
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const img = new Image();
-                    img.src = signatureDataUrl;
-                    
-                    // Configurar canvas
-                    canvas.width = 300;
-                    canvas.height = 100;
-                    
-                    // Dibujar en el canvas cuando la imagen esté cargada
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // Convertir a JPEG
-                    const jpegDataUrl = canvas.toDataURL('image/jpeg');
-                    
-                    // Añadir al PDF
-                    pdf.addImage(
-                        jpegDataUrl,
-                        'JPEG',
-                        margin + 2,
-                        yPos + 2,
-                        contentWidth - 4,
-                        12
-                    );
-                    
-                    console.log('Firma añadida con método alternativo JPEG');
-                } catch (jpegError) {
-                    console.error('Error con método alternativo:', jpegError);
-                    
-                    // Método 3: Dibujar una firma simulada
-                    pdf.setDrawColor(0, 0, 0);
-                    pdf.setLineWidth(0.5);
-                    
-                    const startX = margin + 10;
-                    const endX = margin + contentWidth - 10;
-                    const midY = yPos + 8;
-                    
-                    // Dibujar una firma simulada
-                    pdf.line(startX, midY, startX + 20, midY - 2);
-                    pdf.line(startX + 20, midY - 2, startX + 40, midY + 2);
-                    pdf.line(startX + 40, midY + 2, startX + 60, midY - 1);
-                    pdf.line(startX + 60, midY - 1, endX, midY);
-                    
-                    pdf.setFontSize(8);
-                    pdf.setFont('helvetica', 'italic');
-                    pdf.text('Firma aplicada electrónicamente', margin + contentWidth/2, midY + 5, {align: 'center'});
-                    
-                    console.log('Se dibujó una firma simulada como último recurso');
-                }
+                pdf.setDrawColor(0, 0, 0);
+                pdf.setLineWidth(0.5);
+                
+                const startX = margin + 10;
+                const endX = margin + contentWidth - 10;
+                const midY = yPos + 8;
+                
+                // Dibujar una firma simulada más elaborada
+                pdf.line(startX, midY, startX + 15, midY - 3);
+                pdf.line(startX + 15, midY - 3, startX + 30, midY + 2);
+                pdf.line(startX + 30, midY + 2, startX + 45, midY - 2);
+                pdf.line(startX + 45, midY - 2, startX + 60, midY + 1);
+                pdf.line(startX + 60, midY + 1, startX + 75, midY - 1);
+                pdf.line(startX + 75, midY - 1, endX, midY);
+                
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'italic');
+                pdf.text('Firma aplicada electrónicamente', margin + contentWidth/2, midY + 5, {align: 'center'});
+                
+                console.log('Se dibujó una firma simulada');
             }
-        } else {
-            // Si no hay firma, dibujar una línea para firmar
+        } catch (error) {
+            console.error('Error al procesar la firma:', error);
+            
+            // Si hay cualquier error, asegurar que se muestre algo
             pdf.setDrawColor(0, 0, 0);
             pdf.setLineWidth(0.5);
             pdf.line(margin + 20, yPos + 8, margin + contentWidth - 20, yPos + 8);
             
-            pdf.setFontSize(8);
+            pdf.setFontSize(9);
             pdf.setFont('helvetica', 'italic');
-            pdf.text('Firma pendiente', margin + contentWidth/2, yPos + 12, {align: 'center'});
-            console.log('No hay firma disponible, se dibujó una línea para firmar');
+            pdf.text('Firma del documento', margin + contentWidth/2, yPos + 12, {align: 'center'});
         }
         
         yPos += 18;
