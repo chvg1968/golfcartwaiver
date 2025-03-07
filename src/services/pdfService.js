@@ -80,7 +80,7 @@ export async function generatePDF(formElement) {
       // Añadir contenido HTML para el PDF
       pdfContainer.innerHTML = `
         <div style="text-align: center; margin-bottom: 15px;">
-          <img src="./logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+          <img src="/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
           <h1 style="font-size: 16px; font-weight: bold; margin-top: 10px;">★ GOLF CART LIABILITY WAIVER ★</h1>
         </div>
         
@@ -245,8 +245,18 @@ export async function generatePDF(formElement) {
       // Generar PDF
       const pdfBlob = await html2pdf().from(pdfContainer).set(options).outputPdf('blob');
       
-      // Devolver el blob para su uso posterior (envío por email, etc.)
-      return pdfBlob;
+      // Subir a Supabase y obtener URL pública
+      try {
+          const fileName = `waiver_${Date.now()}.pdf`;
+          const publicUrl = await uploadPDF(fileName, pdfBlob);
+          
+          // Devolver la URL pública para Airtable
+          return publicUrl || null;
+      } catch (uploadError) {
+          console.error('Error al subir PDF:', uploadError);
+          // Como alternativa, devolver el blob
+          return pdfBlob;
+      }
       
     } catch (error) {
       console.error('Error al generar el PDF:', error);

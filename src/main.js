@@ -205,15 +205,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Generar PDF primero
             let pdfLink;
+            let pdfBlob;
             try {
-                pdfLink = await generatePDF(this);
+                const pdfResult = await generatePDF(this);
+                
+                // Verificar si el resultado es una URL o un Blob
+                if (typeof pdfResult === 'string') {
+                    // Es una URL
+                    pdfLink = pdfResult;
+                    console.log('PDF generado y subido correctamente, URL:', pdfLink);
+                } else {
+                    // Es un Blob, intentar crear una URL temporal
+                    pdfBlob = pdfResult;
+                    pdfLink = URL.createObjectURL(pdfBlob);
+                    console.log('PDF generado como Blob, URL temporal creada');
+                }
             } catch (pdfError) {
                 console.warn('Error con generatePDF, intentando createPDF:', pdfError);
                 pdfLink = await createPDF(formData);
             }
 
-            // Enviar a Airtable con el PDF Link
-            await sendToAirtable(formData, pdfLink);
+            // Enviar a Airtable con el PDF Link (solo si es una URL válida)
+            if (typeof pdfLink === 'string' && pdfLink.startsWith('http')) {
+                await sendToAirtable(formData, pdfLink);
+            } else {
+                console.warn('No se pudo enviar a Airtable: PDF Link no es una URL válida');
+            }
 
             // Crear objeto de datos del formulario de manera segura
             const formDataObject = {
