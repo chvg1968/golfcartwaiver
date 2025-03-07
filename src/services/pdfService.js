@@ -195,23 +195,34 @@ export async function generatePDF(formElement) {
         pdf.setFont('helvetica', 'normal');
         yPos += 1;
         
-        const secondText = `I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart. I am responsible for the possession/control of vehicle keys when not in use.`;
+        // Texto sobre prohibición de conducir sin licencia - en ROJO
+        pdf.setTextColor(255, 0, 0); // Color rojo
+        const secondText = `I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart.`;
         yPos = addMultiLineText(secondText, margin, yPos, contentWidth, 4);
         
-        // Texto en negrita para advertencia
+        // Volver a texto negro para la siguiente parte
+        pdf.setTextColor(0, 0, 0);
+        const additionalText = `I am responsible for the possession/control of vehicle keys when not in use.`;
+        yPos = addMultiLineText(additionalText, margin, yPos + 1, contentWidth, 4);
+        
+        // Texto en negrita para advertencia - en ROJO
         pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(255, 0, 0); // Color rojo
         const warningText = `Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death.`;
         yPos = addMultiLineText(warningText, margin, yPos + 1, contentWidth, 4);
+        pdf.setTextColor(0, 0, 0); // Volver a negro
         
         // Volver a texto normal
         pdf.setFont('helvetica', 'normal');
         const normalText = `The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community.`;
         yPos = addMultiLineText(normalText, margin, yPos + 1, contentWidth, 4);
         
-        // Más texto en negrita
+        // Más texto en negrita - en ROJO
         pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(255, 0, 0); // Color rojo
         const moreWarning = `No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer.`;
         yPos = addMultiLineText(moreWarning, margin, yPos + 1, contentWidth, 4);
+        pdf.setTextColor(0, 0, 0); // Volver a negro
         
         // Último párrafo normal y negrita
         pdf.setFont('helvetica', 'normal');
@@ -246,50 +257,29 @@ export async function generatePDF(formElement) {
         // Añadir firma si existe
         if (signatureDataUrl) {
             try {
-                // Crear imagen temporal para obtener dimensiones
-                const img = new Image();
-                img.src = signatureDataUrl;
+                // Método directo para añadir la firma sin manipulación compleja
+                // Esto asegura que la firma se muestre correctamente
+                const signatureX = margin + 2;
+                const signatureY = yPos + 2;
+                const signatureWidth = contentWidth - 4;
+                const signatureHeight = 12; // Altura fija para la firma
                 
-                // Esperar a que la imagen cargue
-                await new Promise((resolve) => {
-                    img.onload = resolve;
-                    img.onerror = resolve; // Resolver incluso si hay error
-                });
+                // Añadir la imagen directamente con dimensiones fijas
+                pdf.addImage(
+                    signatureDataUrl, 
+                    'PNG', 
+                    signatureX, 
+                    signatureY, 
+                    signatureWidth, 
+                    signatureHeight
+                );
                 
-                // Calcular dimensiones manteniendo proporción
-                const maxHeight = 13; // altura máxima en mm
-                const maxWidth = contentWidth - 4;
-                
-                let imgWidth, imgHeight;
-                
-                if (img.width > img.height) {
-                    // Si la imagen es más ancha que alta
-                    imgWidth = Math.min(maxWidth, img.width);
-                    imgHeight = (img.height / img.width) * imgWidth;
-                    
-                    if (imgHeight > maxHeight) {
-                        imgHeight = maxHeight;
-                        imgWidth = (img.width / img.height) * imgHeight;
-                    }
-                } else {
-                    // Si la imagen es más alta que ancha
-                    imgHeight = Math.min(maxHeight, img.height);
-                    imgWidth = (img.width / img.height) * imgHeight;
-                    
-                    if (imgWidth > maxWidth) {
-                        imgWidth = maxWidth;
-                        imgHeight = (img.height / img.width) * imgWidth;
-                    }
-                }
-                
-                // Centrar firma en la caja
-                const signatureX = margin + ((contentWidth - imgWidth) / 2);
-                const signatureY = yPos + 1 + ((15 - imgHeight) / 2);
-                
-                pdf.addImage(signatureDataUrl, 'PNG', signatureX, signatureY, imgWidth, imgHeight);
+                console.log('Firma añadida correctamente');
             } catch (error) {
                 console.error('Error al añadir firma:', error);
             }
+        } else {
+            console.log('No hay firma para añadir');
         }
         
         yPos += 18;
