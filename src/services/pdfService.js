@@ -82,38 +82,60 @@ export async function generatePDF(formElement) {
             }
         });
         
-        // Restaurar la firma en el clon
+        // Restaurar la firma en el clon con altura reducida
         const clonedSignaturePad = formClone.querySelector('#signature-pad');
         if (clonedSignaturePad && signatureDataUrl) {
             // Reemplazar el canvas con una imagen para mejor rendimiento
             const signatureImg = document.createElement('img');
             signatureImg.src = signatureDataUrl;
             signatureImg.style.width = '100%';
-            signatureImg.style.height = 'auto';
+            signatureImg.style.height = '80px'; // Reducir altura de la firma
+            signatureImg.style.objectFit = 'contain'; // Mantener proporción
             signatureImg.style.border = '1px solid #000';
             clonedSignaturePad.parentNode.replaceChild(signatureImg, clonedSignaturePad);
+            
+            // Ajustar también el contenedor de la firma si existe
+            const signatureContainer = signatureImg.closest('.signature-container');
+            if (signatureContainer) {
+                signatureContainer.style.height = 'auto';
+                signatureContainer.style.maxHeight = '100px'; // Limitar altura máxima
+            }
         }
 
-        // Crear contenedor temporal para renderizar
+        // Crear contenedor temporal para renderizar (optimizado para carta)
         const tempContainer = document.createElement('div');
         Object.assign(tempContainer.style, {
             position: 'absolute',
             left: '-9999px',
             top: '0',
-            width: '216mm', // Ancho estándar Letter
+            width: '215.9mm', // Ancho exacto tamaño carta (8.5 pulgadas)
+            maxHeight: '279.4mm', // Alto exacto tamaño carta (11 pulgadas)
             background: 'white',
-            padding: '10mm', // Márgenes reducidos
-            fontSize: '11px', // Tamaño de fuente ligeramente reducido
-            lineHeight: '1.5', // Interlineado para mejor legibilidad
-            fontFamily: 'Arial, sans-serif' // Fuente más legible
+            padding: '12.7mm', // Márgenes de 0.5 pulgadas
+            fontSize: '10px', // Tamaño de fuente reducido para ajustar mejor
+            lineHeight: '1.3', // Interlineado más compacto
+            fontFamily: 'Arial, sans-serif',
+            boxSizing: 'border-box' // Incluir padding en el cálculo del tamaño
+        });
+        
+        // Compactar elementos del formulario para ajustar mejor a una página
+        const formElements = formClone.querySelectorAll('div, p, h1, h2, h3, input, textarea, label');
+        formElements.forEach(el => {
+            // Reducir márgenes y padding
+            if (el.style) {
+                el.style.marginBottom = el.style.marginBottom ? '0.3em' : '';
+                el.style.marginTop = el.style.marginTop ? '0.3em' : '';
+                el.style.paddingBottom = el.style.paddingBottom ? '0.2em' : '';
+                el.style.paddingTop = el.style.paddingTop ? '0.2em' : '';
+            }
         });
         
         tempContainer.appendChild(formClone);
         document.body.appendChild(tempContainer);
 
-        // Configuración altamente optimizada para html2canvas
+        // Configuración altamente optimizada para html2canvas (ajustada para carta)
         const html2canvasOptions = {
-            scale: 1.5, // Ligeramente aumentado para mejor nitidez
+            scale: 2, // Mayor escala para mejor nitidez
             useCORS: true,
             logging: false,
             backgroundColor: 'white',
@@ -124,66 +146,70 @@ export async function generatePDF(formElement) {
             foreignObjectRendering: false,
             // Mejora de renderizado de texto
             textRendering: 'optimizeLegibility',
-            fontRendering: 'optimizeLegibility'
+            fontRendering: 'optimizeLegibility',
+            // Optimizaciones para ajuste de página
+            windowWidth: 816, // 8.5 pulgadas a 96 DPI
+            windowHeight: 1056, // 11 pulgadas a 96 DPI
+            x: 0,
+            y: 0,
+            width: 816,
+            height: 1056,
+            scrollX: 0,
+            scrollY: 0
         };
 
         // Renderizar a canvas con configuración optimizada
         const canvas = await html2canvas(tempContainer, html2canvasOptions);
         
-        // Crear PDF optimizado para Letter
+        // Crear PDF optimizado para Letter con ajustes precisos
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'mm',
             format: 'letter',
-            compress: true
+            compress: true,
+            hotfixes: ['px_scaling'] // Corregir problemas de escala
         });
         
-        const pageWidth = pdf.internal.pageSize.getWidth() - 20; // Márgenes laterales
-        const pageHeight = pdf.internal.pageSize.getHeight() - 20; // Márgenes verticales
+        // Dimensiones exactas de carta con márgenes
+        const pageWidth = pdf.internal.pageSize.getWidth() - 25.4; // 1 pulgada de margen total (0.5 en cada lado)
+        const pageHeight = pdf.internal.pageSize.getHeight() - 25.4; // 1 pulgada de margen total (0.5 en cada lado)
         
-        // Calcular dimensiones para mantener la proporción
+        // Intentar ajustar todo a una sola página
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
+        
+        // Determinar si necesitamos escalar para ajustar a una página
         const ratio = canvasWidth / canvasHeight;
         const pdfWidth = pageWidth;
-        const pdfHeight = pdfWidth / ratio;
+        let pdfHeight = pdfWidth / ratio;
         
-        // Si el contenido es demasiado largo, dividirlo en múltiples páginas
-        const pageCount = Math.ceil(pdfHeight / pageHeight);
+        // Forzar a una sola página si es posible
+        let pageCount = 1;
+        let scale = 1;
         
-        for (let i = 0; i < pageCount; i++) {
-            if (i > 0) pdf.addPage();
-            
-            // Calcular qué parte del canvas mostrar en esta página
-            const sourceY = Math.floor((i * canvasHeight) / pageCount);
-            const sourceHeight = Math.floor(canvasHeight / pageCount);
-            
-            // Crear un canvas temporal para la sección
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasWidth;
-            tempCanvas.height = sourceHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            // Dibujar solo la sección relevante
-            tempCtx.drawImage(
-                canvas, 
-                0, sourceY, canvasWidth, sourceHeight,
-                0, 0, canvasWidth, sourceHeight
-            );
-            
-            // Convertir a JPEG con calidad optimizada
-            const sectionImgData = tempCanvas.toDataURL('image/jpeg', 0.7);
-            
-            // Añadir al PDF con márgenes
-            pdf.addImage(sectionImgData, 'JPEG', 10, 10, pageWidth, pageHeight, null, 'FAST');
-            
-            // Añadir número de página con estilo
-            pdf.setFontSize(9);
-            pdf.setTextColor(100);
-            pdf.text(`Page ${i + 1} of ${pageCount}`, pageWidth / 2 + 10, pageHeight + 10, { 
-                align: 'center' 
-            });
+        if (pdfHeight > pageHeight) {
+            // Si el contenido es más alto que la página, escalamos para ajustar
+            scale = pageHeight / pdfHeight;
+            pdfHeight = pageHeight;
+            console.log('Escalando contenido para ajustar a una página:', scale);
         }
+        
+        // Añadir imagen al PDF con márgenes precisos
+        const imgData = canvas.toDataURL('image/jpeg', 0.85); // Mayor calidad
+        
+        // Centrar en la página
+        const xPos = (pdf.internal.pageSize.getWidth() - pdfWidth) / 2;
+        const yPos = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
+        
+        pdf.addImage(imgData, 'JPEG', xPos, yPos, pdfWidth, pdfHeight, null, 'FAST');
+        
+        // Añadir metadatos al PDF
+        pdf.setProperties({
+            title: 'Golf Cart Liability Waiver',
+            subject: 'Liability Waiver',
+            creator: 'LUXE PROPERTIES',
+            author: 'LUXE PROPERTIES'
+        });
         
         // Limpiar
         document.body.removeChild(tempContainer);
