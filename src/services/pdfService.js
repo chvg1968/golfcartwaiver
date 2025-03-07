@@ -169,23 +169,30 @@ export async function generatePDF(formElement) {
         
         // Añadir cada checkbox con su texto e inicial - Optimizado para ahorrar espacio
         checkboxItems.forEach((item, index) => {
-            // Dibujar checkbox marcado - Usar un símbolo de check más visible
-            pdf.setFillColor(0, 0, 0);
-            pdf.rect(margin, yPos - 3, 3, 3, 'F'); // Checkbox negro sólido
+            // Dibujar checkbox con marca de verificación visible
+            pdf.setDrawColor(0);
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(margin, yPos - 3, 3, 3, 'FD'); // Checkbox con fondo blanco
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('✓', margin + 0.5, yPos - 0.5); // Añadir marca de verificación
             
             // Añadir texto del checkbox
             pdf.setFont('helvetica', 'normal');
             const checkboxText = `${item}`;
             yPos = addMultiLineText(checkboxText, margin + 5, yPos, contentWidth - 25, 4);
             
-            // Añadir caja de iniciales
+            // Añadir etiqueta "INITIAL" y caja de iniciales más cerca del texto
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('INITIAL:', contentWidth - 30, yPos - 4);
+            
+            // Dibujar caja de iniciales justo después de la etiqueta
             pdf.setDrawColor(0);
-            pdf.rect(pageWidth - margin - 15, yPos - 7, 12, 5, 'S');
+            pdf.rect(contentWidth - 15, yPos - 7, 12, 5, 'S');
             
             // Añadir iniciales si existen
             if (initialValues[index]) {
                 pdf.setFont('helvetica', 'bold');
-                pdf.text(initialValues[index], pageWidth - margin - 9, yPos - 4, { align: 'center' });
+                pdf.text(initialValues[index], contentWidth - 9, yPos - 4, { align: 'center' });
             }
             
             yPos += 3; // Espacio reducido entre checkboxes
@@ -233,15 +240,18 @@ export async function generatePDF(formElement) {
         const finalBold = `I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME`;
         yPos = addMultiLineText(finalBold, margin, yPos + 1, contentWidth, 4);
         
-        // Añadir caja de iniciales para el último párrafo
+        // Añadir etiqueta "INITIAL" y caja de iniciales para el último párrafo
         yPos += 2;
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('INITIAL:', contentWidth - 30, yPos - 2);
+        
         pdf.setDrawColor(0);
-        pdf.rect(pageWidth - margin - 15, yPos - 5, 12, 5, 'S');
+        pdf.rect(contentWidth - 15, yPos - 5, 12, 5, 'S');
         
         // Añadir iniciales si existen
         if (initialValues[4]) {
             pdf.setFont('helvetica', 'bold');
-            pdf.text(initialValues[4], pageWidth - margin - 9, yPos - 2, { align: 'center' });
+            pdf.text(initialValues[4], contentWidth - 9, yPos - 2, { align: 'center' });
         }
         
         yPos += 6;
@@ -254,32 +264,56 @@ export async function generatePDF(formElement) {
         pdf.setDrawColor(0);
         pdf.rect(margin, yPos + 1, contentWidth, 15, 'S');
         
-        // Añadir firma si existe
+        // Añadir firma si existe - enfoque simplificado y directo
         if (signatureDataUrl) {
             try {
-                // Método directo para añadir la firma sin manipulación compleja
-                // Esto asegura que la firma se muestre correctamente
+                // Convertir la firma a una imagen para asegurar que se cargue correctamente
+                const img = new Image();
+                img.src = signatureDataUrl;
+                
+                // Esperar a que la imagen cargue completamente
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    // Si la imagen ya está cargada, resolver inmediatamente
+                    if (img.complete) resolve();
+                    // Timeout para evitar bloqueos
+                    setTimeout(resolve, 1000);
+                });
+                
+                // Usar el formato JPEG para mayor compatibilidad
                 const signatureX = margin + 2;
                 const signatureY = yPos + 2;
                 const signatureWidth = contentWidth - 4;
-                const signatureHeight = 12; // Altura fija para la firma
+                const signatureHeight = 12;
                 
-                // Añadir la imagen directamente con dimensiones fijas
+                // Añadir la imagen con formato JPEG en lugar de PNG
                 pdf.addImage(
-                    signatureDataUrl, 
-                    'PNG', 
+                    img, 
+                    'JPEG', 
                     signatureX, 
                     signatureY, 
                     signatureWidth, 
                     signatureHeight
                 );
                 
-                console.log('Firma añadida correctamente');
+                console.log('Firma añadida correctamente con formato JPEG');
             } catch (error) {
                 console.error('Error al añadir firma:', error);
+                // Intento alternativo si falla el método principal
+                try {
+                    pdf.setFontSize(10);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.text('Firma digital aplicada', margin + contentWidth/2, yPos + 8, {align: 'center'});
+                } catch (e) {
+                    console.error('Error al añadir texto de firma alternativo:', e);
+                }
             }
         } else {
             console.log('No hay firma para añadir');
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'italic');
+            pdf.text('Sin firma', margin + contentWidth/2, yPos + 8, {align: 'center'});
         }
         
         yPos += 18;
