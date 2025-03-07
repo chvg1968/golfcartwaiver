@@ -207,6 +207,21 @@ document.addEventListener('DOMContentLoaded', function() {
             let pdfLink;
             let pdfBlob;
             try {
+                // Asegurarse de que la firma esté disponible globalmente
+                if (!window.currentSignature && window.signaturePad && !window.signaturePad.isEmpty()) {
+                    window.currentSignature = window.signaturePad.toDataURL('image/png');
+                    console.log('Firma capturada del pad y guardada globalmente');
+                }
+                
+                // Imprimir los valores de los campos para depuración
+                console.log('Valores del formulario:');
+                console.log('Guest Name:', formData.get('Guest Name'));
+                console.log('License:', formData.get('License'));
+                console.log('Issuing State:', formData.get('Issuing State'));
+                console.log('Address:', formData.get('Address'));
+                console.log('Signature Date:', formData.get('Signature Date'));
+                console.log('Iniciales:', Array.from(document.querySelectorAll('input.initial')).map(i => i.value));
+                
                 const pdfResult = await generatePDF(this);
                 
                 // Verificar si el resultado es una URL o un Blob

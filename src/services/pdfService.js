@@ -65,10 +65,11 @@ export async function generatePDF(formElement) {
     try {
       // Obtener los valores del formulario
       const formData = new FormData(formElement);
-      const fullName = formData.get('fullName') || '';
-      const email = formData.get('email') || '';
-      const phone = formData.get('phone') || '';
-      const address = formData.get('address') || '';
+      const fullName = formData.get('Guest Name') || '';
+      const license = formData.get('License') || '';
+      const issuingState = formData.get('Issuing State') || '';
+      const address = formData.get('Address') || '';
+      const signatureDate = formData.get('Signature Date') || new Date().toLocaleDateString();
       const initialValues = Array.from(formElement.querySelectorAll('input.initial')).map(input => input.value || '');
       
       // Crear un elemento HTML temporal para el PDF
@@ -77,10 +78,15 @@ export async function generatePDF(formElement) {
       pdfContainer.style.padding = '0.5in';
       pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
       
+      // Usar una URL absoluta para el logo
+      // Primero intentamos con la URL del sitio desplegado
+      let logoSrc = 'https://golf-cart-waiver.netlify.app/assets/logo.png';
+      console.log('Usando URL absoluta para el logo:', logoSrc);
+      
       // Añadir contenido HTML para el PDF
       pdfContainer.innerHTML = `
         <div style="text-align: center; margin-bottom: 15px;">
-          <img src="/assets/logo.png" alt="Logo" style="max-width: 150px; height: auto;">
+          <img src="${logoSrc}" alt="Logo" style="max-width: 150px; height: auto;">
           <h1 style="font-size: 16px; font-weight: bold; margin-top: 10px;">★ GOLF CART LIABILITY WAIVER ★</h1>
         </div>
         
@@ -210,6 +216,13 @@ export async function generatePDF(formElement) {
           <p style="font-weight: bold; margin-top: 10px;">
             I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME
           </p>
+          
+          <div style="text-align: right; margin-top: 5px;">
+            <span style="font-size: 10px; font-weight: bold;">INITIAL:</span>
+            <div style="border: 1px solid black; width: 60px; height: 20px; margin-top: 2px; text-align: center; line-height: 20px; display: inline-block;">
+              ${initialValues[4] || ''}
+            </div>
+          </div>
         </div>
         
         <div style="margin-top: 30px;">
@@ -217,19 +230,45 @@ export async function generatePDF(formElement) {
           <div style="border: 1px solid black; height: 60px; width: 100%; position: relative;">
             <img id="signatureImage" src="${window.currentSignature || ''}" style="max-width: 100%; max-height: 100%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
           </div>
+          <script>
+            // Asegurar que la imagen de la firma se cargue correctamente
+            document.getElementById('signatureImage').onload = function() {
+              console.log('Firma cargada correctamente');
+            };
+            document.getElementById('signatureImage').onerror = function() {
+              console.error('Error al cargar la firma');
+              this.style.display = 'none';
+              // Crear una firma simulada como respaldo
+              const canvas = document.createElement('canvas');
+              canvas.width = 300;
+              canvas.height = 60;
+              const ctx = canvas.getContext('2d');
+              ctx.strokeStyle = 'black';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(50, 30);
+              ctx.lineTo(100, 20);
+              ctx.lineTo(150, 40);
+              ctx.lineTo(200, 20);
+              ctx.lineTo(250, 30);
+              ctx.stroke();
+              // Reemplazar la imagen con el canvas
+              this.parentNode.appendChild(canvas);
+            };
+          </script>
           
           <div style="display: flex; margin-top: 20px; font-size: 10px;">
             <div style="flex: 1;">
-              <p style="margin-bottom: 5px;">Full Name: ${fullName}</p>
-              <p style="margin-bottom: 5px;">Email: ${email}</p>
+              <p style="margin-bottom: 5px;"><b>Guest Name:</b> ${fullName}</p>
+              <p style="margin-bottom: 5px;"><b>License:</b> ${license}</p>
             </div>
             <div style="flex: 1;">
-              <p style="margin-bottom: 5px;">Phone: ${phone}</p>
-              <p style="margin-bottom: 5px;">Address: ${address}</p>
+              <p style="margin-bottom: 5px;"><b>Issuing State:</b> ${issuingState}</p>
+              <p style="margin-bottom: 5px;"><b>Address:</b> ${address}</p>
             </div>
           </div>
           
-          <p style="font-size: 10px; margin-top: 20px;">Date: ${new Date().toLocaleDateString()}</p>
+          <p style="font-size: 10px; margin-top: 20px;"><b>Date:</b> ${signatureDate}</p>
         </div>
       `;
       
