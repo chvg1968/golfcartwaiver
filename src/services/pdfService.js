@@ -146,9 +146,9 @@ export async function generatePDF(formElement) {
             width: '215.9mm', // Ancho completo tamaño carta (8.5 pulgadas)
             maxHeight: '279.4mm', // Alto exacto tamaño carta (11 pulgadas)
             background: 'white',
-            padding: '10mm 12mm', // Márgenes laterales balanceados
-            fontSize: '10px', // Tamaño de fuente más legible
-            lineHeight: '1.3', // Interlineado más legible
+            padding: '10mm 15mm', // Márgenes laterales más amplios para mejor legibilidad
+            fontSize: '11px', // Tamaño de fuente más grande para mejor legibilidad
+            lineHeight: '1.4', // Interlineado más amplio
             fontFamily: 'Arial, sans-serif',
             boxSizing: 'border-box', // Incluir padding en el cálculo del tamaño
             overflow: 'hidden', // Asegurar que no haya desbordamiento
@@ -161,9 +161,9 @@ export async function generatePDF(formElement) {
         allElements.forEach(el => {
             if (el.style) {
                 // Espaciado balanceado
-                el.style.margin = '2px 0';
-                el.style.padding = '1px';
-                el.style.lineHeight = '1.3';
+                el.style.margin = '3px 0';
+                el.style.padding = '2px';
+                el.style.lineHeight = '1.4';
                 el.style.maxWidth = '100%'; // Usar ancho completo
                 
                 // Centrar elementos de título y encabezados
@@ -193,19 +193,54 @@ export async function generatePDF(formElement) {
                 
                 // Ajustar campos de formulario para mejor legibilidad
                 if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') {
-                    el.style.marginBottom = '4px';
-                    el.style.marginTop = '4px';
-                    el.style.padding = '3px';
-                    el.style.fontSize = '11px';
+                    el.style.marginBottom = '8px';
+                    el.style.marginTop = '8px';
+                    el.style.padding = '6px';
+                    el.style.fontSize = '13px';
                     el.style.fontWeight = 'normal';
+                    el.style.minHeight = '25px';
+                    el.style.boxSizing = 'border-box';
+                    el.style.display = 'block';
+                    el.style.width = '100%';
+                    el.style.border = '1px solid #666';
+                    el.style.backgroundColor = '#f9f9f9';
+                    el.style.color = '#000';
+                    
+                    // Mejorar visibilidad de los campos del Guest
+                    if (el.name && (el.name.includes('Guest') || el.name.includes('License') || 
+                        el.name.includes('State') || el.name.includes('Address') || 
+                        el.name.includes('Signature'))) {
+                        el.style.fontSize = '14px';
+                        el.style.fontWeight = 'bold';
+                        el.style.padding = '8px';
+                        el.style.border = '1px solid #333';
+                        el.style.backgroundColor = '#f0f0f0';
+                        el.style.marginBottom = '15px';
+                        el.style.marginTop = '10px';
+                    }
                 }
                 
                 // Ajustar etiquetas de formulario
                 if (el.tagName === 'LABEL') {
-                    el.style.marginBottom = '2px';
-                    el.style.marginTop = '3px';
-                    el.style.fontSize = '11px';
+                    el.style.marginBottom = '4px';
+                    el.style.marginTop = '12px';
+                    el.style.fontSize = '13px';
                     el.style.fontWeight = 'bold';
+                    el.style.display = 'block';
+                    el.style.clear = 'both';
+                    el.style.color = '#333';
+                    
+                    // Destacar etiquetas importantes
+                    if (el.textContent && (el.textContent.includes('Guest') || el.textContent.includes('License') || 
+                        el.textContent.includes('State') || el.textContent.includes('Address') || 
+                        el.textContent.includes('Signature'))) {
+                        el.style.fontSize = '14px';
+                        el.style.color = '#000';
+                        el.style.marginTop = '15px';
+                        el.style.marginBottom = '5px';
+                        el.style.padding = '3px 0';
+                        el.style.borderBottom = '1px solid #ddd';
+                    }
                 }
             }
         });
@@ -219,17 +254,20 @@ export async function generatePDF(formElement) {
             mainContainer.style.padding = '0';
         }
         
-        // Ajustar tablas para que sean más compactas
+        // Ajustar tablas para mejor legibilidad
         const tables = formClone.querySelectorAll('table');
         tables.forEach(table => {
             table.style.width = '100%';
             table.style.borderCollapse = 'collapse';
-            table.style.fontSize = '9px';
+            table.style.fontSize = '11px';
+            table.style.marginBottom = '10px';
+            table.style.marginTop = '10px';
             
             const cells = table.querySelectorAll('td, th');
             cells.forEach(cell => {
-                cell.style.padding = '2px';
+                cell.style.padding = '5px';
                 cell.style.textAlign = 'left';
+                cell.style.borderBottom = '1px solid #ddd';
             });
         });
         
@@ -246,36 +284,55 @@ export async function generatePDF(formElement) {
             // Reducir espacios pero mantener legibilidad
             allElements.forEach(el => {
                 if (el.style) {
-                    el.style.margin = '2px 0';
-                    el.style.padding = '1px';
-                    el.style.lineHeight = '1.2';
+                    el.style.margin = '3px 0';
+                    el.style.padding = '2px';
+                    el.style.lineHeight = '1.3';
                 }
             });
             
-            // Reducir el tamaño de la firma pero mantener legibilidad
+            // Ajustar el tamaño de la firma y evitar traslape con etiquetas
             const signatureImg = formClone.querySelector('.signature-container img');
             if (signatureImg) {
-                signatureImg.style.height = '50px';
+                signatureImg.style.height = '65px';
                 const container = signatureImg.closest('.signature-container');
                 if (container) {
-                    container.style.maxHeight = '60px';
-                    container.style.marginTop = '2px';
-                    container.style.marginBottom = '2px';
+                    container.style.maxHeight = '80px';
+                    container.style.marginTop = '25px';
+                    container.style.marginBottom = '15px';
+                    container.style.paddingTop = '15px';
+                    container.style.clear = 'both';
+                    container.style.position = 'relative';
+                    container.style.border = '1px solid #ddd';
+                    container.style.padding = '10px';
+                    container.style.backgroundColor = '#f9f9f9';
+                    
+                    // Buscar la etiqueta de la firma y moverla para evitar traslape
+                    const signatureLabel = formClone.querySelector('label[for="signature"], label:contains("Signature")');
+                    if (signatureLabel) {
+                        signatureLabel.style.marginBottom = '20px';
+                        signatureLabel.style.display = 'block';
+                        signatureLabel.style.fontSize = '14px';
+                        signatureLabel.style.fontWeight = 'bold';
+                    }
                 }
             }
             
             // Reducir tamaño de fuente global pero mantener legibilidad
-            tempContainer.style.fontSize = '9px';
-            tempContainer.style.padding = '8mm 10mm'; // Márgenes balanceados
+            tempContainer.style.fontSize = '10px';
+            tempContainer.style.padding = '10mm 15mm'; // Márgenes balanceados
         }
         
         // Ajustar aún más los encabezados
         const headings = formClone.querySelectorAll('h1, h2, h3, h4, h5, h6');
         headings.forEach(heading => {
-            heading.style.marginTop = '2px';
-            heading.style.marginBottom = '1px';
-            heading.style.fontSize = heading.tagName === 'H1' ? '11px' : 
-                                    heading.tagName === 'H2' ? '10px' : '9px';
+            heading.style.marginTop = '10px';
+            heading.style.marginBottom = '8px';
+            heading.style.fontSize = heading.tagName === 'H1' ? '16px' : 
+                                    heading.tagName === 'H2' ? '14px' : '12px';
+            heading.style.textAlign = 'center';
+            heading.style.fontWeight = 'bold';
+            heading.style.color = '#000';
+            heading.style.padding = '5px 0';
         });
         
         // Aplicar ajustes adicionales al contenedor principal
@@ -287,9 +344,9 @@ export async function generatePDF(formElement) {
             mainContainerCompressed.style.margin = '0';
         }
         
-        // Configuración ultra optimizada para html2canvas (ajustada para carta)
+        // Configuración optimizada para html2canvas con mejor calidad de texto
         const html2canvasOptions = {
-            scale: 2, // Mayor escala para mejor calidad
+            scale: 3, // Mayor escala para mejor calidad
             useCORS: true,
             logging: false,
             backgroundColor: 'white',
@@ -301,6 +358,7 @@ export async function generatePDF(formElement) {
             // Mejora de renderizado de texto
             textRendering: 'optimizeLegibility',
             fontRendering: 'optimizeLegibility',
+            letterRendering: true,
             // Optimizaciones para ajuste de página
             windowWidth: 816, // 8.5 pulgadas a 96 DPI
             windowHeight: 1056, // 11 pulgadas a 96 DPI
@@ -324,9 +382,9 @@ export async function generatePDF(formElement) {
             hotfixes: ['px_scaling'] // Corregir problemas de escala
         });
         
-        // Dimensiones exactas de carta con márgenes balanceados
-        const pageWidth = pdf.internal.pageSize.getWidth() - 30; // Márgenes laterales balanceados (15mm por lado)
-        const pageHeight = pdf.internal.pageSize.getHeight() - 25; // Márgenes verticales balanceados (12.5mm por lado)
+        // Dimensiones exactas de carta con márgenes más amplios para mejor legibilidad
+        const pageWidth = pdf.internal.pageSize.getWidth() - 40; // Márgenes laterales más amplios (20mm por lado)
+        const pageHeight = pdf.internal.pageSize.getHeight() - 30; // Márgenes verticales más amplios (15mm por lado)
         
         // Intentar ajustar todo a una sola página
         const canvasWidth = canvas.width;
@@ -350,9 +408,9 @@ export async function generatePDF(formElement) {
         // Añadir imagen al PDF con márgenes mínimos
         const imgData = canvas.toDataURL('image/jpeg', 0.8); // Calidad balanceada para reducir tamaño
         
-        // Posicionar en la página con márgenes balanceados
-        const xPos = 15; // 15mm de margen izquierdo
-        const yPos = 12.5; // 12.5mm de margen superior
+        // Posicionar en la página con márgenes más amplios
+        const xPos = 20; // 20mm de margen izquierdo
+        const yPos = 15; // 15mm de margen superior
         
         // Usar compressionLevel para reducir el tamaño del PDF
         pdf.addImage(imgData, 'JPEG', xPos, yPos, pdfWidth, pdfHeight, null, 'FAST');
