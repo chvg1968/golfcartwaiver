@@ -203,126 +203,179 @@ export async function generatePDF(formElement) {
         const initialInputs = formElement.querySelectorAll('input.initial');
         const initialValues = Array.from(initialInputs).map(input => input.value || '');
         
-        // Añadir cada checkbox con su texto e inicial - Optimizado para ahorrar espacio
+        // Implementar estructura de tabla para checkboxes, párrafos e iniciales
+        // Definir anchos de columnas
+        const colCheckbox = 5;  // Ancho de columna de checkbox
+        const colInitial = 35;  // Ancho de columna de INITIAL
+        const colText = contentWidth - colCheckbox - colInitial; // Ancho de columna de texto
+        
+        // Altura inicial para la tabla
+        let tableYPos = yPos;
+        
+        // Procesar cada elemento como una fila de tabla
         checkboxItems.forEach((item, index) => {
-            // Dibujar checkbox con marca de verificación adecuada
+            // Guardar posición inicial de la fila
+            const rowStartY = tableYPos;
+            
+            // COLUMNA 1: Checkbox
+            // Dibujar checkbox con marca de verificación
             pdf.setDrawColor(0);
             pdf.setFillColor(255, 255, 255);
-            pdf.rect(margin, yPos - 3, 3, 3, 'FD'); // Checkbox con fondo blanco
+            pdf.rect(margin, tableYPos - 3, 3, 3, 'FD'); // Checkbox con fondo blanco
             
-            // Añadir marca de verificación proporcional al checkbox
-            pdf.setFontSize(6); // Tamaño proporcional al checkbox
-            pdf.setTextColor(0, 0, 0); // Color negro para la marca
+            // Añadir marca de verificación
+            pdf.setFontSize(6);
+            pdf.setTextColor(0, 0, 0);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('X', margin + 0.8, yPos - 0.8); // X como marca de verificación
+            pdf.text('X', margin + 0.8, tableYPos - 0.8);
             
-            // Restaurar tamaño de letra uniforme para el texto
+            // COLUMNA 2: Texto del párrafo
+            // Restaurar tamaño de letra uniforme
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'normal');
-            const checkboxText = `${item}`;
             
-            // Reducir el ancho del texto para dejar espacio para INITIAL
-            yPos = addMultiLineText(checkboxText, margin + 5, yPos, contentWidth - 40, 4);
+            // Calcular posición de inicio del texto
+            const textX = margin + colCheckbox;
             
-            // Añadir etiqueta "INITIAL" al final del texto con más espacio
+            // Añadir texto y obtener la nueva posición Y después del texto
+            const newYPos = addMultiLineText(item, textX, tableYPos, colText, 4);
+            
+            // COLUMNA 3: INITIAL y caja de iniciales
+            // Calcular posición para INITIAL
+            const initialX = margin + colCheckbox + colText;
+            
+            // Añadir etiqueta "INITIAL"
             pdf.setFontSize(9);
             pdf.setFont('helvetica', 'bold');
-            pdf.text('INITIAL:', contentWidth - 30, yPos - 4);
+            pdf.text('INITIAL:', initialX, tableYPos);
             
             // Dibujar caja de iniciales debajo de INITIAL
             pdf.setDrawColor(0);
-            pdf.rect(contentWidth - 30, yPos - 3, 12, 5, 'S');
+            pdf.rect(initialX, tableYPos + 1, 12, 5, 'S');
             
             // Añadir iniciales si existen
             if (initialValues[index]) {
                 pdf.setFont('helvetica', 'bold');
-                pdf.text(initialValues[index], contentWidth - 24, yPos, { align: 'center' });
+                pdf.text(initialValues[index], initialX + 6, tableYPos + 4, { align: 'center' });
             }
             
-            yPos += 3; // Espacio reducido entre checkboxes
+            // Actualizar posición Y para la siguiente fila
+            // Usar la posición más baja entre el texto y la caja de iniciales
+            tableYPos = Math.max(newYPos, tableYPos + 8) + 2;
         });
         
-        // Añadir checkbox para el párrafo completo que sigue
-        yPos += 4;
+        // Añadir checkbox para el párrafo completo que sigue usando el mismo formato de tabla
+        tableYPos += 4;
         
-        // Dibujar checkbox con marca de verificación adecuada
+        // COLUMNA 1: Checkbox
         pdf.setDrawColor(0);
         pdf.setFillColor(255, 255, 255);
-        pdf.rect(margin, yPos - 3, 3, 3, 'FD'); // Checkbox con fondo blanco
+        pdf.rect(margin, tableYPos - 3, 3, 3, 'FD'); // Checkbox con fondo blanco
         
-        // Añadir marca de verificación proporcional al checkbox
-        pdf.setFontSize(6); // Tamaño proporcional al checkbox
-        pdf.setTextColor(0, 0, 0); // Color negro para la marca
+        // Añadir marca de verificación
+        pdf.setFontSize(6);
+        pdf.setTextColor(0, 0, 0);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('X', margin + 0.8, yPos - 0.8); // X como marca de verificación
+        pdf.text('X', margin + 0.8, tableYPos - 0.8);
         
-        // Establecer tamaño de fuente uniforme para todo el texto
+        // COLUMNA 2: Texto en ROJO sobre prohibición de conducir sin licencia
         pdf.setFontSize(9);
-        
-        // Texto sobre prohibición de conducir sin licencia - en ROJO
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(255, 0, 0); // Color rojo
-        const secondText = `I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart.`;
-        yPos = addMultiLineText(secondText, margin + 6, yPos, contentWidth - 6, 4);
         
-        // Volver a texto negro para la siguiente parte
+        // Calcular posición de inicio del texto
+        const textX = margin + colCheckbox;
+        
+        // Añadir texto y obtener la nueva posición Y después del texto
+        const secondText = `I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart.`;
+        const newYPos = addMultiLineText(secondText, textX, tableYPos, colText, 4);
+        
+        // COLUMNA 3: INITIAL y caja de iniciales
+        // Calcular posición para INITIAL
+        const initialX = margin + colCheckbox + colText;
+        
+        // Añadir etiqueta "INITIAL"
+        pdf.setTextColor(0, 0, 0); // Volver a texto negro para INITIAL
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('INITIAL:', initialX, tableYPos);
+        
+        // Dibujar caja de iniciales debajo de INITIAL
+        pdf.setDrawColor(0);
+        pdf.rect(initialX, tableYPos + 1, 12, 5, 'S');
+        
+        // Añadir iniciales si existen
+        if (initialValues[4]) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(initialValues[4], initialX + 6, tableYPos + 4, { align: 'center' });
+        }
+        
+        // Actualizar posición Y para continuar
+        tableYPos = Math.max(newYPos, tableYPos + 8) + 2;
+        
+        // Continuar con el resto del documento usando el formato de tabla
+        // Texto adicional
         pdf.setTextColor(0, 0, 0);
+        pdf.setFont('helvetica', 'normal');
         const additionalText = `I am responsible for the possession/control of vehicle keys when not in use.`;
-        yPos = addMultiLineText(additionalText, margin + 6, yPos + 1, contentWidth - 6, 4);
+        tableYPos = addMultiLineText(additionalText, margin + colCheckbox, tableYPos + 1, contentWidth - colCheckbox, 4) + 2;
         
         // Texto en negrita para advertencia - en ROJO
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const warningText = `Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death.`;
-        yPos = addMultiLineText(warningText, margin + 6, yPos + 1, contentWidth - 6, 4);
-        pdf.setTextColor(0, 0, 0); // Volver a negro
+        tableYPos = addMultiLineText(warningText, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
         
         // Volver a texto normal
+        pdf.setTextColor(0, 0, 0); // Volver a negro
         pdf.setFont('helvetica', 'normal');
         const normalText = `The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community.`;
-        yPos = addMultiLineText(normalText, margin + 6, yPos + 1, contentWidth - 6, 4);
+        tableYPos = addMultiLineText(normalText, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
         
         // Más texto en negrita - en ROJO
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const moreWarning = `No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer.`;
-        yPos = addMultiLineText(moreWarning, margin + 6, yPos + 1, contentWidth - 6, 4);
-        pdf.setTextColor(0, 0, 0); // Volver a negro
+        tableYPos = addMultiLineText(moreWarning, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
         
         // Último párrafo normal y negrita
+        pdf.setTextColor(0, 0, 0); // Volver a negro
         pdf.setFont('helvetica', 'normal');
         const finalText = `In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun.`;
-        yPos = addMultiLineText(finalText, margin + 6, yPos + 1, contentWidth - 6, 4);
+        tableYPos = addMultiLineText(finalText, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
         
         pdf.setFont('helvetica', 'bold');
         const finalBold = `I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME`;
-        yPos = addMultiLineText(finalBold, margin + 6, yPos + 1, contentWidth - 6, 4);
+        tableYPos = addMultiLineText(finalBold, margin + colCheckbox, tableYPos, contentWidth - colCheckbox, 4) + 2;
         
         // Añadir etiqueta "INITIAL" al final del último párrafo
-        yPos += 2;
-        pdf.setFontSize(9); // Tamaño uniforme
+        // Calcular posición para INITIAL
+        const lastInitialX = margin + colCheckbox + colText;
+        
+        // Añadir etiqueta "INITIAL"
+        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('INITIAL:', contentWidth - 30, yPos - 4);
+        pdf.text('INITIAL:', lastInitialX, tableYPos - 4);
         
         // Dibujar caja de iniciales debajo de INITIAL
         pdf.setDrawColor(0);
-        pdf.rect(contentWidth - 30, yPos - 3, 12, 5, 'S');
+        pdf.rect(lastInitialX, tableYPos - 3, 12, 5, 'S');
         
         // Añadir iniciales si existen
         if (initialValues[4]) {
             pdf.setFont('helvetica', 'bold');
-            pdf.text(initialValues[4], contentWidth - 24, yPos, { align: 'center' });
+            pdf.text(initialValues[4], lastInitialX + 6, tableYPos, { align: 'center' });
         }
         
-        yPos += 6;
+        // Actualizar posición Y para continuar
+        tableYPos += 6;
         
         // Añadir sección de firma
         pdf.setFont('helvetica', 'normal');
-        pdf.text('Signature:', margin, yPos);
+        pdf.text('Signature:', margin, tableYPos);
         
         // Dibujar caja para firma
         pdf.setDrawColor(0);
-        pdf.rect(margin, yPos + 1, contentWidth, 15, 'S');
+        pdf.rect(margin, tableYPos + 1, contentWidth, 15, 'S');
         
         // Solución definitiva para la firma - con método de respaldo garantizado
         try {
@@ -345,7 +398,7 @@ export async function generatePDF(formElement) {
                 try {
                     // Dimensiones fijas para la firma
                     const signatureX = margin + 2;
-                    const signatureY = yPos + 2;
+                    const signatureY = tableYPos + 2;
                     const signatureWidth = contentWidth - 4;
                     const signatureHeight = 12;
                     
@@ -378,7 +431,7 @@ export async function generatePDF(formElement) {
                 
                 const startX = margin + 10;
                 const endX = margin + contentWidth - 10;
-                const midY = yPos + 8;
+                const midY = tableYPos + 8;
                 
                 // Dibujar una firma simulada más elaborada
                 pdf.line(startX, midY, startX + 15, midY - 3);
@@ -399,11 +452,11 @@ export async function generatePDF(formElement) {
                 // Último recurso: solo una línea simple
                 pdf.setDrawColor(0, 0, 0);
                 pdf.setLineWidth(0.5);
-                pdf.line(margin + 20, yPos + 8, margin + contentWidth - 20, yPos + 8);
+                pdf.line(margin + 20, tableYPos + 8, margin + contentWidth - 20, tableYPos + 8);
                 
                 pdf.setFontSize(9);
                 pdf.setFont('helvetica', 'italic');
-                pdf.text('Firma del documento', margin + contentWidth/2, yPos + 12, {align: 'center'});
+                pdf.text('Firma del documento', margin + contentWidth/2, tableYPos + 12, {align: 'center'});
             }
         }
         
