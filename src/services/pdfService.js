@@ -169,12 +169,16 @@ export async function generatePDF(formElement) {
         
         // Añadir cada checkbox con su texto e inicial - Optimizado para ahorrar espacio
         checkboxItems.forEach((item, index) => {
-            // Dibujar checkbox con marca de verificación visible
+            // Dibujar checkbox con marca de verificación más visible
             pdf.setDrawColor(0);
             pdf.setFillColor(255, 255, 255);
-            pdf.rect(margin, yPos - 3, 3, 3, 'FD'); // Checkbox con fondo blanco
+            pdf.rect(margin, yPos - 3, 4, 4, 'FD'); // Checkbox más grande con fondo blanco
+            
+            // Añadir marca de verificación más grande y visible
+            pdf.setFontSize(10); // Tamaño más grande para la marca
+            pdf.setTextColor(0, 0, 0); // Color negro para la marca
             pdf.setFont('helvetica', 'bold');
-            pdf.text('✓', margin + 0.5, yPos - 0.5); // Añadir marca de verificación
+            pdf.text('✓', margin + 1, yPos - 0.5); // Marca de verificación centrada
             
             // Añadir texto del checkbox
             pdf.setFont('helvetica', 'normal');
@@ -198,47 +202,61 @@ export async function generatePDF(formElement) {
             yPos += 3; // Espacio reducido entre checkboxes
         });
         
-        // Añadir segundo texto
-        pdf.setFont('helvetica', 'normal');
-        yPos += 1;
+        // Añadir checkbox para el párrafo completo que sigue
+        yPos += 4;
+        
+        // Dibujar checkbox con marca de verificación más visible
+        pdf.setDrawColor(0);
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(margin, yPos - 3, 4, 4, 'FD'); // Checkbox más grande con fondo blanco
+        
+        // Añadir marca de verificación más grande y visible
+        pdf.setFontSize(10); // Tamaño más grande para la marca
+        pdf.setTextColor(0, 0, 0); // Color negro para la marca
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('✓', margin + 1, yPos - 0.5); // Marca de verificación centrada
+        
+        // Volver al tamaño de fuente normal
+        pdf.setFontSize(8);
         
         // Texto sobre prohibición de conducir sin licencia - en ROJO
+        pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const secondText = `I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart.`;
-        yPos = addMultiLineText(secondText, margin, yPos, contentWidth, 4);
+        yPos = addMultiLineText(secondText, margin + 6, yPos, contentWidth - 6, 4);
         
         // Volver a texto negro para la siguiente parte
         pdf.setTextColor(0, 0, 0);
         const additionalText = `I am responsible for the possession/control of vehicle keys when not in use.`;
-        yPos = addMultiLineText(additionalText, margin, yPos + 1, contentWidth, 4);
+        yPos = addMultiLineText(additionalText, margin + 6, yPos + 1, contentWidth - 6, 4);
         
         // Texto en negrita para advertencia - en ROJO
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const warningText = `Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death.`;
-        yPos = addMultiLineText(warningText, margin, yPos + 1, contentWidth, 4);
+        yPos = addMultiLineText(warningText, margin + 6, yPos + 1, contentWidth - 6, 4);
         pdf.setTextColor(0, 0, 0); // Volver a negro
         
         // Volver a texto normal
         pdf.setFont('helvetica', 'normal');
         const normalText = `The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community.`;
-        yPos = addMultiLineText(normalText, margin, yPos + 1, contentWidth, 4);
+        yPos = addMultiLineText(normalText, margin + 6, yPos + 1, contentWidth - 6, 4);
         
         // Más texto en negrita - en ROJO
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(255, 0, 0); // Color rojo
         const moreWarning = `No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer.`;
-        yPos = addMultiLineText(moreWarning, margin, yPos + 1, contentWidth, 4);
+        yPos = addMultiLineText(moreWarning, margin + 6, yPos + 1, contentWidth - 6, 4);
         pdf.setTextColor(0, 0, 0); // Volver a negro
         
         // Último párrafo normal y negrita
         pdf.setFont('helvetica', 'normal');
         const finalText = `In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun.`;
-        yPos = addMultiLineText(finalText, margin, yPos + 1, contentWidth, 4);
+        yPos = addMultiLineText(finalText, margin + 6, yPos + 1, contentWidth - 6, 4);
         
         pdf.setFont('helvetica', 'bold');
         const finalBold = `I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME`;
-        yPos = addMultiLineText(finalBold, margin, yPos + 1, contentWidth, 4);
+        yPos = addMultiLineText(finalBold, margin + 6, yPos + 1, contentWidth - 6, 4);
         
         // Añadir etiqueta "INITIAL" y caja de iniciales para el último párrafo
         yPos += 2;
@@ -264,56 +282,63 @@ export async function generatePDF(formElement) {
         pdf.setDrawColor(0);
         pdf.rect(margin, yPos + 1, contentWidth, 15, 'S');
         
-        // Añadir firma si existe - enfoque simplificado y directo
+        // Método completamente nuevo para añadir la firma
         if (signatureDataUrl) {
             try {
-                // Convertir la firma a una imagen para asegurar que se cargue correctamente
-                const img = new Image();
-                img.src = signatureDataUrl;
-                
-                // Esperar a que la imagen cargue completamente
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                    // Si la imagen ya está cargada, resolver inmediatamente
-                    if (img.complete) resolve();
-                    // Timeout para evitar bloqueos
-                    setTimeout(resolve, 1000);
-                });
-                
-                // Usar el formato JPEG para mayor compatibilidad
+                // Enfoque directo: dibujar un rectángulo con la firma como patrón
                 const signatureX = margin + 2;
                 const signatureY = yPos + 2;
                 const signatureWidth = contentWidth - 4;
                 const signatureHeight = 12;
                 
-                // Añadir la imagen con formato JPEG en lugar de PNG
-                pdf.addImage(
-                    img, 
-                    'JPEG', 
-                    signatureX, 
-                    signatureY, 
-                    signatureWidth, 
-                    signatureHeight
-                );
-                
-                console.log('Firma añadida correctamente con formato JPEG');
+                // Usar un enfoque más simple y directo
+                const base64Data = signatureDataUrl.split(',')[1];
+                if (base64Data) {
+                    // Añadir directamente la imagen en base64
+                    pdf.addImage(
+                        signatureDataUrl,
+                        'PNG',
+                        signatureX,
+                        signatureY,
+                        signatureWidth,
+                        signatureHeight
+                    );
+                    console.log('Firma añadida directamente desde base64');
+                } else {
+                    throw new Error('Formato de firma no válido');
+                }
             } catch (error) {
                 console.error('Error al añadir firma:', error);
-                // Intento alternativo si falla el método principal
+                
+                // Plan B: Dibujar una firma simulada
                 try {
-                    pdf.setFontSize(10);
+                    // Dibujar una línea ondulada que simule una firma
+                    pdf.setDrawColor(0, 0, 0);
+                    pdf.setLineWidth(0.5);
+                    
+                    const startX = margin + 10;
+                    const endX = margin + contentWidth - 10;
+                    const midY = yPos + 8;
+                    
+                    // Dibujar una línea ondulada
+                    pdf.line(startX, midY, startX + 20, midY - 2);
+                    pdf.line(startX + 20, midY - 2, startX + 40, midY + 2);
+                    pdf.line(startX + 40, midY + 2, startX + 60, midY - 1);
+                    pdf.line(startX + 60, midY - 1, endX, midY);
+                    
+                    pdf.setFontSize(8);
                     pdf.setFont('helvetica', 'italic');
-                    pdf.text('Firma digital aplicada', margin + contentWidth/2, yPos + 8, {align: 'center'});
+                    pdf.text('Firma aplicada electrónicamente', margin + contentWidth/2, midY + 5, {align: 'center'});
                 } catch (e) {
-                    console.error('Error al añadir texto de firma alternativo:', e);
+                    console.error('Error al dibujar firma simulada:', e);
                 }
             }
         } else {
-            console.log('No hay firma para añadir');
+            // Si no hay firma, indicarlo claramente
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'italic');
-            pdf.text('Sin firma', margin + contentWidth/2, yPos + 8, {align: 'center'});
+            pdf.text('Firma pendiente', margin + contentWidth/2, yPos + 8, {align: 'center'});
+            console.log('No hay firma para añadir');
         }
         
         yPos += 18;
