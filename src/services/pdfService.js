@@ -272,13 +272,13 @@ export async function generatePDF(formElement) {
                                     heading.tagName === 'H2' ? '10px' : '9px';
         });
         
-        // Usar ancho completo para el contenedor principal
-        const mainContainer = formClone.querySelector('form') || formClone.querySelector('div');
-        if (mainContainer) {
-            mainContainer.style.width = '100%';
-            mainContainer.style.maxWidth = '100%';
-            mainContainer.style.padding = '0';
-            mainContainer.style.margin = '0';
+        // Aplicar ajustes adicionales al contenedor principal
+        const mainContainerCompressed = formClone.querySelector('form') || formClone.querySelector('div');
+        if (mainContainerCompressed) {
+            mainContainerCompressed.style.width = '100%';
+            mainContainerCompressed.style.maxWidth = '100%';
+            mainContainerCompressed.style.padding = '0';
+            mainContainerCompressed.style.margin = '0';
         }
         
         // Configuración ultra optimizada para html2canvas (ajustada para carta)
