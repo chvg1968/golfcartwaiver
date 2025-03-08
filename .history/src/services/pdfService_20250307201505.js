@@ -73,22 +73,14 @@ export async function createPDF(formData) {
 
 // Función auxiliar para encontrar la ruta correcta del logo
 async function findValidLogoPath() {
-  // Verificar si estamos en Netlify u otro entorno de producción
-  const isNetlify = window.location.hostname.includes('netlify.app');
-  
-  // Si estamos en Netlify, usar una ruta relativa en lugar de window.location.origin
-  if (isNetlify) {
-    return '/assets/logo.png'; // Ruta relativa que funciona en Netlify
-  }
-  
-  // Opciones de rutas para el logo en entorno de desarrollo
+  // Opciones de rutas para el logo
   const options = [
+    window.location.origin + '/assets/logo.png',
     '/assets/logo.png',
     './assets/logo.png',
     '../assets/logo.png',
     'assets/logo.png',
-    'dist/assets/logo.png',
-    window.location.origin + '/assets/logo.png'
+    'dist/assets/logo.png'
   ];
   
   // Función para verificar si una imagen existe
@@ -231,27 +223,11 @@ export async function generatePDF(formElement) {
         </div>
         
         <div style="margin-top: 15px; font-size: 10px;">
-          <!-- Párrafo compacto sin saltos de línea en formato de tabla -->
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="width: 20px; vertical-align: top; padding: 5px;">
-                <div style="border: 1px solid black; width: 15px; height: 15px; text-align: center; line-height: 15px;">✔̲</div>
-              </td>
-              <td style="vertical-align: top; padding: 5px;">
-                <p style="font-size: 10px; margin: 0;">
-                  <span style="color: red; font-weight: bold;">I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart.</span> I am responsible for the possession/control of vehicle keys when not in use. <span style="color: red; font-weight: bold;">Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death.</span> The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community. <span style="color: red; font-weight: bold;">No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer.</span> In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun. <span style="font-weight: bold;">I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME</span>
-                </p>
-              </td>
-              <td style="width: 80px; vertical-align: top; padding: 5px;">
-                <div>
-                  <span style="font-size: 10px; font-weight: bold;">INITIAL:</span>
-                  <div style="border: 1px solid black; width: 60px; height: 20px; margin-top: 2px; text-align: center; line-height: 20px; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 12px;">${initialValues[4] || ""}</span>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </table>
+          <!-- Párrafo compacto sin saltos de línea -->
+          <div style="border: 1px solid black; width: 15px; height: 15px; text-align: center; line-height: 15px;">✔︎</div>
+          <p style="margin-bottom: 10px;">
+            <span style="color: red; font-weight: bold;">I acknowledge that it is strictly forbidden for an individual without a valid driver's license to operate the golf cart.</span> I am responsible for the possession/control of vehicle keys when not in use. <span style="color: red; font-weight: bold;">Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death.</span> The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community. <span style="color: red; font-weight: bold;">No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer.</span> In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun. <span style="font-weight: bold;">I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME</span>
+          </p>
           
           <div style="text-align: right; margin-top: 10px; margin-bottom: 10px;">
             <table style="width: 100%;">
