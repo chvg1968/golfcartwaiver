@@ -71,87 +71,49 @@ export async function createPDF(formData) {
   }
 }
 
-// Logo en base64 como fallback para garantizar que siempre haya un logo disponible
-const logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAFMCAYAAAAEIWqlAAAKoWlDQ1BJQ0MgUHJvZmlsZQAASImVlwdQk9kWx+/3femFlhABKaE3KaE3"; // Truncated for brevity - will use a different approach
-
 // Función auxiliar para encontrar la ruta correcta del logo
 async function findValidLogoPath() {
-    // Verificar si estamos en Netlify u otro entorno de producción
-    const isNetlify = window.location.hostname.includes('netlify.app');
-    
-    // Si estamos en Netlify, intentar cargar el logo de varias maneras
-    if (isNetlify) {
-      console.log("Entorno Netlify detectado, intentando múltiples estrategias para el logo");
-      
-      // Opciones específicas para Netlify
-      const netlifyOptions = [
-        '/assets/logo.png',
-        'assets/logo.png',
-        './assets/logo.png',
-        '../assets/logo.png',
-        'https://golf-cart-waiver.netlify.app/assets/logo.png'
-      ];
-      
-      // Verificar cada opción
-      for (const path of netlifyOptions) {
-        console.log("Probando ruta de logo en Netlify:", path);
-        try {
-          const exists = await checkImage(path);
-          if (exists) {
-            console.log("Ruta de logo válida encontrada en Netlify:", path);
-            return path;
-          }
-        } catch (error) {
-          console.log("Error al verificar ruta:", path, error);
-        }
-      }
-      
-      // Si ninguna opción funciona en Netlify, usar una imagen embebida en base64
-      console.log("Usando logo embebido en base64 como fallback seguro");
-      return createInlineLogoElement();
-    }
-    
-    // Opciones de rutas para el logo en entorno de desarrollo
-    const options = [
-      '/assets/logo.png',
-      './assets/logo.png',
-      '../assets/logo.png',
-      'assets/logo.png',
-      'dist/assets/logo.png',
-      window.location.origin + '/assets/logo.png'
-    ];
-    
-    // Probar cada opción hasta encontrar una válida
-    for (const path of options) {
-      console.log("Probando ruta de logo:", path);
-      if (await checkImage(path)) {
-        console.log("Ruta de logo válida encontrada:", path);
-        return path;
-      }
-    }
-    
-    console.log("No se encontró una ruta válida para el logo, usando elemento en línea");
-    return createInlineLogoElement();
+  // Verificar si estamos en Netlify u otro entorno de producción
+  const isNetlify = window.location.hostname.includes('netlify.app');
+  
+  // Si estamos en Netlify, usar una ruta relativa en lugar de window.location.origin
+  if (isNetlify) {
+    console.log("Entorno Netlify detectado, usando ruta relativa para el logo");
+    return '/assets/logo.png'; // Ruta relativa que funciona en Netlify
   }
   
+  // Opciones de rutas para el logo en entorno de desarrollo
+  const options = [
+    '/assets/logo.png',
+    './assets/logo.png',
+    '../assets/logo.png',
+    'assets/logo.png',
+    'dist/assets/logo.png',
+    window.location.origin + '/assets/logo.png'
+  ];
+  
   // Función para verificar si una imagen existe
-  function checkImage(path) {
+  const checkImage = (path) => {
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(true);
       img.onerror = () => resolve(false);
       img.src = path;
-      // Establecer un timeout para evitar esperas indefinidas
-      setTimeout(() => resolve(false), 2000);
     });
+  };
+  
+  // Probar cada opción hasta encontrar una válida
+  for (const path of options) {
+    console.log("Probando ruta de logo:", path);
+    if (await checkImage(path)) {
+      console.log("Ruta de logo válida encontrada:", path);
+      return path;
+    }
   }
   
-  // Función para crear un elemento de logo en línea cuando no se puede cargar el archivo
-  function createInlineLogoElement() {
-    // En lugar de usar una imagen base64 completa (que sería muy larga),
-    // creamos un elemento de texto estilizado como fallback
-    return "INLINE_LOGO_ELEMENT";
-  }
+  console.log("No se encontró una ruta válida para el logo, usando fallback");
+  return options[0];
+}
   
   export async function generatePDF(formElement) {
     try {
@@ -183,19 +145,9 @@ async function findValidLogoPath() {
       console.log("Ruta final del logo:", logoSrc);
   
       // Añadir contenido HTML para el PDF
-      let logoElement;
-      
-      if (logoSrc === "INLINE_LOGO_ELEMENT") {
-        // Si estamos usando el elemento de texto como fallback
-        logoElement = `<div style="text-align: center; font-size: 18px; font-weight: bold; margin: 0 auto; padding: 10px; border: 1px solid #ccc; width: 150px; height: 50px;">LUXE PROPERTIES</div>`;
-      } else {
-        // Si tenemos una URL de imagen válida
-        logoElement = `<img src="${logoSrc}" alt="Logo" style="max-width: 150px; height: auto; margin: 0 auto;" onerror="this.style.display='none'">`;
-      }
-      
       pdfContainer.innerHTML = `
           <div style="text-align: center; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center;">
-            ${logoElement}
+            <img src="${logoSrc}" alt="Logo" style="max-width: 150px; height: auto; margin: 0 auto;">
             <h1 style="font-size: 14px; font-weight: bold; margin-top: 5px; text-align: center;">★ GOLF CART LIABILITY WAIVER ★</h1>
           </div>
           
@@ -356,75 +308,28 @@ async function findValidLogoPath() {
         pagebreak: { mode: "avoid-all" } // Evitar saltos de página automáticos
       };
   
-      // Generar PDF con manejo de errores mejorado
-      document.body.appendChild(pdfContainer);
-      
-      // Agregar logs para depuración
-      console.log("Generando PDF con contenedor de tamaño:", pdfContainer.offsetWidth, "x", pdfContainer.offsetHeight);
-      
+      // Generar PDF
+      const pdfBlob = await html2pdf()
+        .from(pdfContainer)
+        .set(options)
+        .outputPdf("blob");
+
+      // Subir a Supabase y obtener URL pública
       try {
-        // Esperar a que todas las imágenes se carguen o fallen
-        const images = pdfContainer.querySelectorAll('img');
-        if (images.length > 0) {
-          await Promise.all(
-            Array.from(images).map(
-              img => new Promise(resolve => {
-                if (img.complete) resolve();
-                else {
-                  img.onload = () => resolve();
-                  img.onerror = () => {
-                    console.log("Error al cargar imagen, ocultándola");
-                    img.style.display = 'none';
-                    resolve();
-                  };
-                }
-              })
-            )
-          );
+        const fileName = `waiver_${Date.now()}.pdf`;
+        const { data, error } = await uploadPDF(pdfBlob, formData);
+        
+        if (error) {
+          console.error("Error al subir PDF a Supabase:", error);
+          throw new Error("Error al subir PDF a Supabase");
         }
         
-        // Generar el PDF
-        const pdfBlob = await html2pdf().from(pdfContainer).set(options).outputPdf('blob');
-        document.body.removeChild(pdfContainer);
-    
-        // Verificar que el blob sea válido
-        if (!pdfBlob || pdfBlob.size < 1000) {
-          throw new Error("El PDF generado no es válido o está vacío");
-        }
-    
-        // Subir PDF a Supabase con reintentos
-        let uploadResult;
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (retryCount < maxRetries) {
-          try {
-            uploadResult = await uploadPDF(pdfBlob, formData);
-            if (uploadResult && !uploadResult.error) {
-              break;
-            }
-            retryCount++;
-            console.log(`Reintento ${retryCount}/${maxRetries} para subir PDF`);
-          } catch (uploadError) {
-            retryCount++;
-            console.error(`Error en uploadPDF (intento ${retryCount}/${maxRetries}):`, uploadError);
-            if (retryCount >= maxRetries) throw uploadError;
-          }
-        }
-    
-        if (!uploadResult || uploadResult.error) {
-          throw new Error("No se pudo subir el PDF después de varios intentos");
-        }
-    
-        // Devolver URL pública del PDF
-        return uploadResult.data.publicUrl;
-      } catch (error) {
-        // Asegurarse de eliminar el contenedor si sigue en el DOM
-        if (document.body.contains(pdfContainer)) {
-          document.body.removeChild(pdfContainer);
-        }
-        console.error("Error al generar o subir PDF:", error);
-        throw error;
+        // Devolver la URL pública para Airtable
+        return data.publicUrl || null;
+      } catch (uploadError) {
+        console.error("Error al subir PDF:", uploadError);
+        // Como alternativa, devolver el blob
+        return pdfBlob;
       }
     } catch (error) {
       console.error("Error al generar PDF:", error);
