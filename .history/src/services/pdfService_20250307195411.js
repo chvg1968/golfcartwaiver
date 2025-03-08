@@ -154,7 +154,7 @@ export async function generatePDF(formElement) {
             </tr>
             <tr>
               <td style="width: 20px; vertical-align: top; padding: 5px;">
-                <div style="border: 1px solid black; width: 15px; height: 15px; text-align: center; line-height: 15px;">✔︎</div>
+                <div style="border: 1px solid black; width: 15px; height: 15px; text-align: center; line-height: 15px;">X</div>
               </td>
               <td style="vertical-align: top; padding: 5px;">
                 <p style="font-size: 10px; margin: 0;">
