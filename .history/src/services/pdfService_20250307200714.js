@@ -71,39 +71,6 @@ export async function createPDF(formData) {
   }
 }
 
-// Función auxiliar para encontrar la ruta correcta del logo
-async function findValidLogoPath() {
-  // Opciones de rutas para el logo
-  const options = [
-    window.location.origin + '/assets/logo.png',
-    '/assets/logo.png',
-    './assets/logo.png',
-    '../assets/logo.png',
-    'assets/logo.png',
-    'dist/assets/logo.png'
-  ];
-  
-  // Función para verificar si una imagen existe
-  const checkImage = (path) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = path;
-    });
-  };
-  
-  // Probar cada opción hasta encontrar una válida
-  for (const path of options) {
-    if (await checkImage(path)) {
-      return path;
-    }
-  }
-  
-  // Si ninguna opción funciona, devolver la primera como fallback
-  return options[0];
-}
-
 export async function generatePDF(formElement) {
   try {
     // Obtener los valores del formulario
@@ -125,14 +92,17 @@ export async function generatePDF(formElement) {
     pdfContainer.style.margin = "0 auto";
     pdfContainer.style.maxWidth = "90%";
     pdfContainer.style.fontFamily = "Helvetica, Arial, sans-serif";
+
+    // Usar múltiples opciones para el logo para asegurar que se cargue
+    // Reemplaza la sección actual del logo (líneas 80-98 aproximadamente) con este código:
+
+    // Logo en formato base64 para asegurar que siempre se cargue correctamente
     
-    // Encontrar una ruta válida para el logo
-    const logoSrc = await findValidLogoPath();
 
     // Añadir contenido HTML para el PDF
     pdfContainer.innerHTML = `
         <div style="text-align: center; margin-bottom: 15px; display: flex; flex-direction: column; align-items: center;">
-          <img src="${logoSrc}" alt="Logo" style="max-width: 180px; height: auto; margin: 0 auto;">
+          <img src="${logoBase64}" alt="Logo" style="max-width: 180px; height: auto; margin: 0 auto;">
           <h1 style="font-size: 16px; font-weight: bold; margin-top: 10px; text-align: center;">★ GOLF CART LIABILITY WAIVER ★</h1>
         </div>
         
