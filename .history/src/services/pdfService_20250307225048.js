@@ -105,7 +105,7 @@ export async function generatePDF(formElement) {
             width: '216mm', // Ancho estándar Letter
             background: 'white',
             padding: '8mm', // Márgenes más reducidos
-            fontSize: '14px', // Tamaño de fuente más pequeño
+            fontSize: '9px', // Tamaño de fuente más pequeño
             lineHeight: '1.2', // Interlineado más compacto
             fontFamily: 'Arial, sans-serif' // Fuente más legible
         });
