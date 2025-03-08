@@ -77,7 +77,9 @@ export async function generatePDF(formElement) {
         images.forEach(img => {
             // Reducir calidad de las imágenes si no son la firma
             if (!img.closest('.signature-container')) {
-                img.style.maxWidth = '300px'; // Limitar tamaño máximo
+                img.style.maxWidth = '150px'; // Reducir tamaño máximo del logo
+                img.style.maxHeight = '60px'; // Mantener proporción del logo
+                img.style.objectFit = 'contain'; // Mantener proporción
                 img.style.imageRendering = 'crisp-edges';
             }
         });
@@ -102,9 +104,9 @@ export async function generatePDF(formElement) {
             top: '0',
             width: '216mm', // Ancho estándar Letter
             background: 'white',
-            padding: '10mm', // Márgenes reducidos
-            fontSize: '11px', // Tamaño de fuente ligeramente reducido
-            lineHeight: '1.5', // Interlineado para mejor legibilidad
+            padding: '8mm', // Márgenes más reducidos
+            fontSize: '9px', // Tamaño de fuente más pequeño
+            lineHeight: '1.2', // Interlineado más compacto
             fontFamily: 'Arial, sans-serif' // Fuente más legible
         });
         
@@ -113,7 +115,7 @@ export async function generatePDF(formElement) {
 
         // Configuración altamente optimizada para html2canvas
         const html2canvasOptions = {
-            scale: 1.5, // Ligeramente aumentado para mejor nitidez
+            scale: 1.2, // Reducido para evitar contenido excesivo
             useCORS: true,
             logging: false,
             backgroundColor: 'white',
@@ -148,42 +150,25 @@ export async function generatePDF(formElement) {
         const pdfWidth = pageWidth;
         const pdfHeight = pdfWidth / ratio;
         
-        // Si el contenido es demasiado largo, dividirlo en múltiples páginas
-        const pageCount = Math.ceil(pdfHeight / pageHeight);
-        
-        for (let i = 0; i < pageCount; i++) {
-            if (i > 0) pdf.addPage();
-            
-            // Calcular qué parte del canvas mostrar en esta página
-            const sourceY = Math.floor((i * canvasHeight) / pageCount);
-            const sourceHeight = Math.floor(canvasHeight / pageCount);
-            
-            // Crear un canvas temporal para la sección
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvasWidth;
-            tempCanvas.height = sourceHeight;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            // Dibujar solo la sección relevante
-            tempCtx.drawImage(
-                canvas, 
-                0, sourceY, canvasWidth, sourceHeight,
-                0, 0, canvasWidth, sourceHeight
-            );
-            
-            // Convertir a JPEG con calidad optimizada
-            const sectionImgData = tempCanvas.toDataURL('image/jpeg', 0.7);
-            
-            // Añadir al PDF con márgenes
-            pdf.addImage(sectionImgData, 'JPEG', 10, 10, pageWidth, pageHeight, null, 'FAST');
-            
-            // Añadir número de página con estilo
-            pdf.setFontSize(9);
-            pdf.setTextColor(100);
-            pdf.text(`Page ${i + 1} of ${pageCount}`, pageWidth / 2 + 10, pageHeight + 10, { 
-                align: 'center' 
-            });
+        // Ajustar el contenido para que quepa en una sola página
+        // Calcular factor de escala para asegurar que todo quepa en una página
+        let scaleFactor = 1;
+        if (pdfHeight > pageHeight) {
+            scaleFactor = pageHeight / pdfHeight;
         }
+        
+        // Ajustar dimensiones para una sola página
+        const adjustedWidth = pdfWidth * scaleFactor;
+        const adjustedHeight = pdfHeight * scaleFactor;
+        
+        // Convertir a JPEG con calidad optimizada
+        const imgData = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Añadir al PDF con márgenes, centrado si es necesario
+        const xOffset = (pageWidth - adjustedWidth) / 2 + 10;
+        pdf.addImage(imgData, 'JPEG', xOffset, 10, adjustedWidth, adjustedHeight, null, 'FAST');
+        
+        // No añadimos número de página ya que ahora solo hay una
         
         // Limpiar
         document.body.removeChild(tempContainer);
