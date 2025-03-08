@@ -3,10 +3,6 @@ import html2canvas from "html2canvas";
 import { supabase, uploadPDF } from "../utils/supabaseClient";
 import html2pdf from "html2pdf.js";
 
-// Logo en formato base64 (incluido directamente en el código)
-const logoBase64 =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAP8AAAFMCAYAAAAEIWqlAAAKoWlDQ1BJQ0MgUHJvZmlsZQAASImVlwdQk9kWx+/3femFlhABKaE3KaE3"; // Aquí debes pegar el contenido completo del archivo logo_base64.txt precedido por "data:image/png;base64,"
-
 // Función para generar PDF sin descargar inmediatamente
 export async function createPDF(formData) {
   try {
@@ -75,36 +71,83 @@ export async function createPDF(formData) {
   }
 }
 
-// Función para generar el PDF sin depender del logo externo
-export async function generatePDF(formElement) {
-  try {
-    // Obtener los valores del formulario
-    const formData = new FormData(formElement);
-    const fullName = formData.get("Guest Name") || "";
-    const license = formData.get("License") || "";
-    const issuingState = formData.get("Issuing State") || "";
-    const address = formData.get("Address") || "";
-    const signatureDate =
-      formData.get("Signature Date") || new Date().toLocaleDateString();
-    const initialValues = Array.from(
-      formElement.querySelectorAll("input.initial")
-    ).map((input) => input.value || "");
-
-    // Crear un elemento HTML temporal para el PDF
-    const pdfContainer = document.createElement("div");
-    pdfContainer.style.width = "7in";
-    pdfContainer.style.padding = "0.3in";
-    pdfContainer.style.margin = "0 auto";
-    pdfContainer.style.maxWidth = "90%";
-    pdfContainer.style.fontFamily = "Helvetica, Arial, sans-serif";
-    pdfContainer.style.fontSize = "9px"; // Reducir el tamaño del texto
-    pdfContainer.style.lineHeight = "1.1"; // Reducir el espacio entre líneas
-    pdfContainer.style.pageBreakInside = "avoid"; // Evitar cortes de página
-
-    // Añadir contenido HTML para el PDF - usando un título en lugar de logo para evitar problemas
-    pdfContainer.innerHTML = `
+// Función auxiliar para encontrar la ruta correcta del logo
+async function findValidLogoPath() {
+  // Verificar si estamos en Netlify u otro entorno de producción
+  const isNetlify = window.location.hostname.includes('netlify.app');
+  
+  // Si estamos en Netlify, usar una ruta relativa en lugar de window.location.origin
+  if (isNetlify) {
+    console.log("Entorno Netlify detectado, usando ruta relativa para el logo");
+    return '/assets/logo.png'; // Ruta relativa que funciona en Netlify
+  }
+  
+  // Opciones de rutas para el logo en entorno de desarrollo
+  const options = [
+    '/assets/logo.png',
+    './assets/logo.png',
+    '../assets/logo.png',
+    'assets/logo.png',
+    'dist/assets/logo.png',
+    window.location.origin + '/assets/logo.png'
+  ];
+  
+  // Función para verificar si una imagen existe
+  const checkImage = (path) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = path;
+    });
+  };
+  
+  // Probar cada opción hasta encontrar una válida
+  for (const path of options) {
+    console.log("Probando ruta de logo:", path);
+    if (await checkImage(path)) {
+      console.log("Ruta de logo válida encontrada:", path);
+      return path;
+    }
+  }
+  
+  console.log("No se encontró una ruta válida para el logo, usando fallback");
+  return options[0];
+}
+  
+  export async function generatePDF(formElement) {
+    try {
+      // Obtener los valores del formulario
+      const formData = new FormData(formElement);
+      const fullName = formData.get("Guest Name") || "";
+      const license = formData.get("License") || "";
+      const issuingState = formData.get("Issuing State") || "";
+      const address = formData.get("Address") || "";
+      const signatureDate =
+        formData.get("Signature Date") || new Date().toLocaleDateString();
+      const initialValues = Array.from(
+        formElement.querySelectorAll("input.initial")
+      ).map((input) => input.value || "");
+  
+      // Crear un elemento HTML temporal para el PDF
+      const pdfContainer = document.createElement("div");
+      pdfContainer.style.width = "7in";
+      pdfContainer.style.padding = "0.3in";
+      pdfContainer.style.margin = "0 auto";
+      pdfContainer.style.maxWidth = "90%";
+      pdfContainer.style.fontFamily = "Helvetica, Arial, sans-serif";
+      pdfContainer.style.fontSize = "9px"; // Reducir el tamaño del texto
+      pdfContainer.style.lineHeight = "1.1"; // Reducir el espacio entre líneas
+      pdfContainer.style.pageBreakInside = "avoid"; // Evitar cortes de página
+      
+      // Encontrar una ruta válida para el logo
+      const logoSrc = await findValidLogoPath();
+      console.log("Ruta final del logo:", logoSrc);
+  
+      // Añadir contenido HTML para el PDF
+      pdfContainer.innerHTML = `
           <div style="text-align: center; margin-bottom: 10px; display: flex; flex-direction: column; align-items: center;">
-            <img src="${logoBase64}" alt="Logo" style="max-width: 150px; height: auto; margin: 0 auto;">
+            <img src="${logoSrc}" alt="Logo" style="max-width: 150px; height: auto; margin: 0 auto;">
             <h1 style="font-size: 14px; font-weight: bold; margin-top: 5px; text-align: center;">★ GOLF CART LIABILITY WAIVER ★</h1>
           </div>
           
@@ -132,9 +175,7 @@ export async function generatePDF(formElement) {
                   <div>
                     <span style="font-size: 9px; font-weight: bold;">INITIAL:</span>
                     <div style="border: 1px solid black; width: 60px; height: 20px; margin-top: 2px; text-align: center; line-height: 20px; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
-                      <span style="font-size: 11px;">${
-                        initialValues[0] || ""
-                      }</span>
+                      <span style="font-size: 11px;">${initialValues[0] || ""}</span>
                     </div>
                   </div>
                 </td>
@@ -152,9 +193,7 @@ export async function generatePDF(formElement) {
                   <div>
                     <span style="font-size: 9px; font-weight: bold;">INITIAL:</span>
                     <div style="border: 1px solid black; width: 60px; height: 20px; margin-top: 2px; text-align: center; line-height: 20px; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
-                      <span style="font-size: 11px;">${
-                        initialValues[1] || ""
-                      }</span>
+                      <span style="font-size: 11px;">${initialValues[1] || ""}</span>
                     </div>
                   </div>
                 </td>
@@ -172,9 +211,7 @@ export async function generatePDF(formElement) {
                   <div>
                     <span style="font-size: 9px; font-weight: bold;">INITIAL:</span>
                     <div style="border: 1px solid black; width: 60px; height: 20px; margin-top: 2px; text-align: center; line-height: 20px; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
-                      <span style="font-size: 11px;">${
-                        initialValues[2] || ""
-                      }</span>
+                      <span style="font-size: 11px;">${initialValues[2] || ""}</span>
                     </div>
                   </div>
                 </td>
@@ -192,9 +229,7 @@ export async function generatePDF(formElement) {
                   <div>
                     <span style="font-size: 9px; font-weight: bold;">INITIAL:</span>
                     <div style="border: 1px solid black; width: 60px; height: 20px; margin-top: 2px; text-align: center; line-height: 20px; background-color: #f9f9f9; display: flex; align-items: center; justify-content: center;">
-                      <span style="font-size: 11px;">${
-                        initialValues[3] || ""
-                      }</span>
+                      <span style="font-size: 11px;">${initialValues[3] || ""}</span>
                     </div>
                   </div>
                 </td>
@@ -255,58 +290,52 @@ export async function generatePDF(formElement) {
             <p style="font-size: 9px; margin-top: 10px; text-align: center;"><b>Date:</b> ${signatureDate}</p>
           </div>
         `;
-
-    // Opciones para html2pdf
-    const options = {
-      margin: [10, 10, 10, 10], // [top, right, bottom, left] - reducidos
-      filename: "golf-cart-waiver.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-      jsPDF: {
-        unit: "mm",
-        format: "letter",
-        orientation: "portrait",
-        compress: true,
-        precision: 2,
-        putOnlyUsedFonts: true,
-      },
-      pagebreak: { mode: "avoid-all" }, // Evitar saltos de página automáticos
-    };
-
-    try {
-      document.body.appendChild(pdfContainer);
-
-      // Generar el PDF
+  
+      // Opciones para html2pdf
+      const options = {
+        margin: [10, 10, 10, 10], // [top, right, bottom, left] - reducidos
+        filename: "golf-cart-waiver.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { 
+          unit: "mm", 
+          format: "letter", 
+          orientation: "portrait",
+          compress: true,
+          precision: 2,
+          putOnlyUsedFonts: true
+        },
+        pagebreak: { mode: "avoid-all" } // Evitar saltos de página automáticos
+      };
+  
+      // Generar PDF
       const pdfBlob = await html2pdf()
         .from(pdfContainer)
         .set(options)
         .outputPdf("blob");
 
-      document.body.removeChild(pdfContainer);
-
       // Subir a Supabase y obtener URL pública
-      const { data, error } = await uploadPDF(pdfBlob, formData);
-
-      if (error) {
-        console.error("Error al subir PDF a Supabase:", error);
-        throw new Error("Error al subir PDF a Supabase");
+      try {
+        const fileName = `waiver_${Date.now()}.pdf`;
+        const { data, error } = await uploadPDF(pdfBlob, formData);
+        
+        if (error) {
+          console.error("Error al subir PDF a Supabase:", error);
+          throw new Error("Error al subir PDF a Supabase");
+        }
+        
+        // Devolver la URL pública para Airtable
+        return data.publicUrl || null;
+      } catch (uploadError) {
+        console.error("Error al subir PDF:", uploadError);
+        // Como alternativa, devolver el blob
+        return pdfBlob;
       }
-
-      // Devolver la URL pública para Airtable
-      return data.publicUrl || null;
-    } catch (uploadError) {
-      // Asegurarse de eliminar el contenedor si sigue en el DOM
-      if (document.body.contains(pdfContainer)) {
-        document.body.removeChild(pdfContainer);
-      }
-      console.error("Error al generar o subir PDF:", uploadError);
-      throw uploadError;
+    } catch (error) {
+      console.error("Error al generar PDF:", error);
+      throw error;
     }
-  } catch (error) {
-    console.error("Error general al generar PDF:", error);
-    throw error;
   }
-}
 // Función auxiliar para enviar el PDF por email
 export async function sendPDFByEmail(pdfBlob, email, fullName) {
   try {
