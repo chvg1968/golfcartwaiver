@@ -34,6 +34,41 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
     }
 })();
 
+// Función para guardar waiver en la tabla waivers de Supabase
+export async function saveWaiverToSupabase({
+    form_id,
+    signature_date,
+    guest_name,
+    license,
+    issuing_state,
+    address,
+    pdf_link
+}) {
+    try {
+        const { data, error } = await supabase
+            .from('waivers')
+            .insert([
+                {
+                    form_id,
+                    signature_date,
+                    guest_name,
+                    license,
+                    issuing_state,
+                    address,
+                    pdf_link
+                }
+            ]);
+        if (error) {
+            console.error('Error al guardar waiver en Supabase:', error);
+            throw error;
+        }
+        return data;
+    } catch (err) {
+        console.error('Excepción al guardar waiver en Supabase:', err);
+        throw err;
+    }
+}
+
 // Función helper para subir PDFs con mejor manejo de errores y reintentos
 export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
     let retryCount = 0;

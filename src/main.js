@@ -3,6 +3,7 @@ import { Spinner } from 'spin.js';
 import { sendEmail } from './services/emailService.js';
 import { generatePDF, downloadPDF, createPDF } from './services/pdfService.js';
 import { sendToAirtable } from './services/airtableService.js';
+import { saveWaiverToSupabase } from './utils/supabaseClient.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Configuración del spinner
@@ -240,11 +241,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 pdfLink = await createPDF(formData);
             }
 
-            // Enviar a Airtable con el PDF Link (solo si es una URL válida)
+            // Enviar a Airtable y Supabase con el PDF Link (solo si es una URL válida)
             if (typeof pdfLink === 'string' && pdfLink.startsWith('http')) {
                 await sendToAirtable(formData, pdfLink);
+                try {
+                    await saveWaiverToSupabase({
+                        form_id: formId,
+                        signature_date: new Date().toISOString().split('T')[0],
+                        guest_name: guestName,
+                        license: getFormFieldValue('input[name="License"]'),
+                        issuing_state: getFormFieldValue('input[name="Issuing State"]'),
+                        address: getFormFieldValue('input[name="Address"]'),
+                        pdf_link: pdfLink
+                    });
+                    console.log('Waiver guardado en Supabase');
+                } catch (supabaseError) {
+                    console.error('Error al guardar waiver en Supabase:', supabaseError);
+                }
             } else {
-                console.warn('No se pudo enviar a Airtable: PDF Link no es una URL válida');
+                console.warn('No se pudo enviar a Airtable/Supabase: PDF Link no es una URL válida');
             }
 
             // Crear objeto de datos del formulario de manera segura
