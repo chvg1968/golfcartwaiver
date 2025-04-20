@@ -5,15 +5,6 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 // Usar exclusivamente la anon key
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Información de depuración detallada (sin mostrar la clave completa por seguridad)
-console.log('Configuración de Supabase:', { 
-    urlExists: !!supabaseUrl, 
-    keyExists: !!supabaseKey,
-    url: supabaseUrl,
-    keyLength: supabaseKey ? supabaseKey.length : 0,
-    keyFirstChars: supabaseKey ? `${supabaseKey.substring(0, 5)}...` : null
-});
-
 if (!supabaseUrl || !supabaseKey) {
     console.error('Variables de entorno de Supabase no configuradas');
     throw new Error('Variables de entorno de Supabase no configuradas');
@@ -31,20 +22,58 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
         if (bucketsError) {
             console.error('Error al listar buckets:', bucketsError);
             console.warn('Posible problema con la API key o permisos');
-        } else {
-            console.log('Conexión a Supabase Storage exitosa. Buckets:', buckets);
         }
         
         // Verificar sesión de autenticación
         const { data, error } = await supabase.auth.getSession();
-        console.log('Estado de sesión Supabase:', { 
-            tieneSession: !!data.session,
-            error: error ? error.message : null
-        });
+        if (error) {
+            console.error('Error de sesión Supabase:', error.message);
+        }
     } catch (err) {
         console.error('Error al verificar conexión Supabase:', err);
     }
 })();
+
+// Función para guardar waiver en la tabla waivers de Supabase
+export async function saveWaiverToSupabase({
+    form_id,
+    signature_date,
+    guest_name,
+    license,
+    issuing_state,
+    address,
+    pdf_link
+}) {
+    try {
+        const { data, error } = await supabase
+            .from('waivers')
+            .insert([
+                {
+                    form_id,
+                    signature_date,
+                    guest_name,
+                    license,
+                    issuing_state,
+                    address,
+                    pdf_link
+                }
+            ]);
+        if (error) {
+            console.error('Error al guardar waiver en Supabase:', error);
+            alert('[Supabase] Error al guardar el waiver: ' + (error.message || JSON.stringify(error)));
+            throw error;
+        }
+        if (!data) {
+            console.warn('[Supabase] La respuesta no contiene datos:', data);
+        } else {
+            console.log('[Supabase] Registro insertado correctamente:', data);
+        }
+        return data;
+    } catch (err) {
+        console.error('Excepción al guardar waiver en Supabase:', err);
+        throw err;
+    }
+}
 
 // Función helper para subir PDFs con mejor manejo de errores y reintentos
 export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
@@ -52,8 +81,6 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
     
     while (retryCount < maxRetries) {
         try {
-            console.log(`Intento ${retryCount + 1}/${maxRetries} - Subiendo archivo a Supabase...`, fileName);
-            
             // Verificar que el blob sea válido
             if (!pdfBlob || !(pdfBlob instanceof Blob)) {
                 throw new Error('El archivo PDF no es válido');
@@ -66,7 +93,6 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
             
             // Usar la carpeta "public" dentro del bucket "pdfs"
             const filePath = `public/${fileName}`;
-            console.log(`Intentando subir archivo a Supabase bucket "pdfs" en la ruta: ${filePath}`);
             
             // Intentar verificar si el bucket existe y sus políticas antes de subir
             await testBucketAccess();
@@ -92,15 +118,11 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
                 throw new Error(`Error al subir el archivo: ${error.message}`);
             }
 
-            console.log('Archivo subido exitosamente:', data);
-
             // Obtener la URL pública
             const { data: publicUrlData } = supabase.storage
                 .from('pdfs')
                 .getPublicUrl(filePath);
                 
-            console.log('URL pública generada:', publicUrlData);
-            
             return publicUrlData.publicUrl;
 
         } catch (error) {
@@ -121,7 +143,6 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
 // Función para probar el acceso al bucket
 export async function testBucketAccess() {
     try {
-        console.log('Probando acceso al bucket...');
         let { data, error } = await supabase.storage.from("pdfs").list();
         
         if (error) {
@@ -133,8 +154,7 @@ export async function testBucketAccess() {
             });
             return false;
         }
-        
-        console.log('Buckets disponibles:', data)  
+         
         // Listar archivos en la carpeta public
         const { data: files, error: filesError } = await supabase.storage
             .from('pdfs')
@@ -142,8 +162,6 @@ export async function testBucketAccess() {
             
         if (filesError) {
             console.error('Error al listar archivos en la carpeta public:', filesError);
-        } else {
-            console.log('Archivos en la carpeta public:', files);
         }
         
         return true;
