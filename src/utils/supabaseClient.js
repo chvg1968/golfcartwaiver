@@ -60,7 +60,13 @@ export async function saveWaiverToSupabase({
             ]);
         if (error) {
             console.error('Error al guardar waiver en Supabase:', error);
+            alert('[Supabase] Error al guardar el waiver: ' + (error.message || JSON.stringify(error)));
             throw error;
+        }
+        if (!data) {
+            console.warn('[Supabase] La respuesta no contiene datos:', data);
+        } else {
+            console.log('[Supabase] Registro insertado correctamente:', data);
         }
         return data;
     } catch (err) {
