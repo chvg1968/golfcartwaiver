@@ -1,5 +1,6 @@
 .env
 node_modules
+.history/
 
 # Local Netlify folder
 .netlify
