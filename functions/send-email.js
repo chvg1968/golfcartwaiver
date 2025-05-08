@@ -23,7 +23,7 @@ exports.handler = async function(event, context) {
     const TEST_EMAIL = 'conradovilla@gmail.com';
 
     const emailData = {
-      from: 'Resend <onboarding@resend.dev>',
+      from: 'Resend <noreply@mail.luxepropertiespr.com>',
       to: TEST_EMAIL,
       subject: 'Golf Cart Liability Waiver - Confirmation',
       html: `
