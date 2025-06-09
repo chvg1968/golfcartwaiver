@@ -1,4 +1,3 @@
-export const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY;
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 export const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const AIRTABLE_API_KEY = import.meta.env.VITE_AIRTABLE_API_KEY;

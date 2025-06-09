@@ -53,9 +53,12 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Limpiar el nombre del invitado para el campo 'from'
+        const guestNameForFrom = payload.formData.guestName.replace(/:/g, '-'); // Reemplaza ':' con '-'
+
         // Enviar email
         const result = await resend.emails.send({
-            from: `Golf Cart Waiver from ${payload.formData.guestName} <noreply@mail.luxepropertiespr.com>`,
+            from: `Golf Cart Waiver from ${guestNameForFrom} <noreply@mail.luxepropertiespr.com>`, // Usa el nombre limpiado
             to: TEST_EMAIL,
             subject: 'Golf Cart Liability Waiver',
             html: `
@@ -91,6 +94,7 @@ Waiver Details:
 
         // Manejar respuesta de Resend
         if (result.error) {
+            console.error('Resend returned an error object:', JSON.stringify(result.error, null, 2)); // <--- Added this line
             return {
                 statusCode: 500,
                 body: JSON.stringify({ 

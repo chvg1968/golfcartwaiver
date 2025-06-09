@@ -3,44 +3,6 @@ import { Resend } from 'resend';
 // Configuración de Resend para Netlify con manejo de errores
 let resend = null;
 
-// Función para obtener TEST_EMAIL de manera segura
-const getTestEmail = () => {
-    const emails = [
-        import.meta.env.VITE_TEST_EMAIL,
-        import.meta.env.TEST_EMAIL,
-        process.env.VITE_TEST_EMAIL,
-        process.env.TEST_EMAIL
-    ];
-
-    const validEmail = emails.find(email => email && email.trim() !== '');
-    
-    if (!validEmail) {
-        console.error('No se encontró ninguna configuración válida para TEST_EMAIL');
-    }
-
-    return validEmail;
-};
-
-const TEST_EMAIL = getTestEmail();
-
-try {
-    const resendApiKeys = [
-        import.meta.env.VITE_RESEND_API_KEY,
-        import.meta.env.RESEND_API_KEY,
-        process.env.VITE_RESEND_API_KEY,
-        process.env.RESEND_API_KEY
-    ];
-
-    const resendApiKey = resendApiKeys.find(key => key && key.trim() !== '');
-    
-    if (!resendApiKey) {
-        console.warn('Resend API Key no configurada. Los emails no se podrán enviar.');
-    } else {
-        resend = new Resend(resendApiKey);
-    }
-} catch (error) {
-    console.error('Error al inicializar Resend:', error);
-}
 
 export function generateEmailHTML(formData, pdfLink) {
   return `

@@ -1,4 +1,4 @@
-const { Resend } = require('resend');
+/* const { Resend } = require('resend');
 
 exports.handler = async function(event, context) {
   // Solo permitir método POST
@@ -72,3 +72,4 @@ exports.handler = async function(event, context) {
     };
   }
 };
+ */
