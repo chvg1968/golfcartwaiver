@@ -1,5 +1,6 @@
 import SignaturePad from 'signature_pad';
 import { Spinner } from 'spin.js';
+import Swal from 'sweetalert2';
 import { sendEmail } from './services/emailService.js';
 import { generatePDF, downloadPDF, createPDF } from './services/pdfService.js';
 import { sendToAirtable } from './services/airtableService.js';
@@ -279,24 +280,48 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await sendEmail(formDataObject, pdfLink);
 
             if (result.success) {
-                // Descargar PDF de manera separada
-                if (pdfLink) {
-                    try {
-                        downloadPDF(pdfLink);
-                    } catch (downloadError) {
-                        console.error('Error al descargar PDF:', downloadError);
-                    }
-                }
-                
-                alert('Waiver enviado exitosamente');
+                // Mostrar mensaje de éxito primero
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Waiver Submitted',
+                    text: 'Your waiver has been successfully submitted. The PDF will download shortly.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#007bff',
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+
                 form.reset();
                 window.signaturePad.clear();
+
+                // Descargar PDF después de un delay para que el usuario pueda leer el mensaje
+                if (pdfLink) {
+                    setTimeout(() => {
+                        try {
+                            downloadPDF(pdfLink);
+                        } catch (downloadError) {
+                            console.error('Error al descargar PDF:', downloadError);
+                        }
+                    }, 3000);
+                }
             } else {
-                alert(`Error al enviar waiver: ${result.error}`);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: result.error || 'An error occurred while submitting the waiver.',
+                    confirmButtonText: 'Try Again',
+                    confirmButtonColor: '#dc3545'
+                });
             }
         } catch (error) {
             console.error('Error detallado al procesar el formulario:', error);
-            alert(`Error: ${error.message}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'An unexpected error occurred.',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#dc3545'
+            });
         } finally {
             // Restaurar botón y ocultar spinner
             submitBtn.disabled = false;
