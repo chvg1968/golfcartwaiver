@@ -1,6 +1,50 @@
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
-import { supabase, uploadPDF } from "../utils/supabaseClient";
+
+// Función para subir PDF a través de Netlify Function (más seguro)
+async function uploadPDFViaServer(fileName, pdfBlob) {
+    try {
+        // Convertir Blob a base64
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                // Remover el prefijo "data:application/pdf;base64,"
+                const base64String = reader.result.split(',')[1];
+                resolve(base64String);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(pdfBlob);
+        });
+
+        console.log('Enviando PDF a Netlify Function...');
+        
+        const response = await fetch('/api/upload-pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fileName: fileName,
+                pdfBase64: base64,
+                contentType: 'application/pdf'
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            console.error('Error del servidor:', result);
+            throw new Error(result.message || 'Error al subir PDF');
+        }
+
+        console.log('PDF subido exitosamente via servidor:', result.publicUrl);
+        return result.publicUrl;
+
+    } catch (error) {
+        console.error('Error en uploadPDFViaServer:', error);
+        throw error;
+    }
+}
 
 // Función helper para generar nombre de archivo con formato: Guest_name_fecha
 function generateFileName(guestName) {
@@ -234,9 +278,9 @@ export async function generatePDF(formElement) {
       compressPdf: true,
     });
 
-    // Subir a Supabase usando la función helper
+    // Subir a Supabase usando Netlify Function (más seguro - no expone keys)
     try {
-      const publicUrl = await uploadPDF(fileName, compressedPdf);
+      const publicUrl = await uploadPDFViaServer(fileName, compressedPdf);
 
       if (publicUrl) {
         return publicUrl;
@@ -246,7 +290,16 @@ export async function generatePDF(formElement) {
       }
     } catch (uploadError) {
       console.error("Error inesperado al subir PDF:", uploadError);
-      return null;
+      // Si falla el servidor, intentar subida directa como fallback
+      console.warn("Intentando subida directa como fallback...");
+      try {
+        const { uploadPDF } = await import("../utils/supabaseClient");
+        const publicUrl = await uploadPDF(fileName, compressedPdf);
+        return publicUrl;
+      } catch (fallbackError) {
+        console.error("También falló la subida directa:", fallbackError);
+        return null;
+      }
     }
   } catch (error) {
     console.error("Error en generación de PDF:", error);
