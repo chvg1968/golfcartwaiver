@@ -208,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Generar PDF primero
             let pdfLink;
             let pdfBlob;
+            let pdfUploadFailed = false;
             try {
                 // Asegurarse de que la firma esté disponible globalmente
                 if (!window.currentSignature && window.signaturePad && !window.signaturePad.isEmpty()) {
@@ -226,20 +227,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const pdfResult = await generatePDF(this);
                 
-                // Verificar si el resultado es una URL o un Blob
-                if (typeof pdfResult === 'string') {
-                    // Es una URL
+                // Verificar si el resultado es una URL válida de Supabase o un Blob
+                if (typeof pdfResult === 'string' && pdfResult.startsWith('http')) {
+                    // Es una URL pública de Supabase
                     pdfLink = pdfResult;
                     console.log('PDF generado y subido correctamente, URL:', pdfLink);
-                } else {
-                    // Es un Blob, intentar crear una URL temporal
+                } else if (pdfResult === null) {
+                    // generatePDF retornó null (error de subida a Supabase)
+                    pdfUploadFailed = true;
+                    console.error('Error con generatePDF, intentando createPDF:', 'La subida a Supabase falló');
+                    throw new Error('Error al subir PDF a Supabase - verificar políticas RLS');
+                } else if (pdfResult instanceof Blob) {
+                    // Es un Blob, intentar crear una URL temporal (no servirá para Airtable)
                     pdfBlob = pdfResult;
                     pdfLink = URL.createObjectURL(pdfBlob);
-                    console.log('PDF generado como Blob, URL temporal creada');
+                    pdfUploadFailed = true;
+                    console.warn('PDF generado como Blob local - no se podrá enviar a Airtable');
                 }
             } catch (pdfError) {
-                console.warn('Error con generatePDF, intentando createPDF:', pdfError);
-                pdfLink = await createPDF(formData);
+                console.error('Error con generatePDF:', pdfError.message);
+                pdfUploadFailed = true;
+                
+                // Si el error es de RLS, mostrar mensaje específico
+                if (pdfError.message && pdfError.message.includes('row-level security')) {
+                    console.error('========================================');
+                    console.error('SOLUCIÓN: Ejecuta SUPABASE_RLS_SETUP.sql en Supabase');
+                    console.error('========================================');
+                }
+                
+                // Intentar crear PDF localmente como fallback (solo para descarga local)
+                try {
+                    pdfLink = await createPDF(formData);
+                    console.log('PDF creado localmente como fallback');
+                } catch (fallbackError) {
+                    console.error('También falló createPDF:', fallbackError);
+                }
             }
 
             // Enviar a Airtable y Supabase con el PDF Link (solo si es una URL válida)
