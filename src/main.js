@@ -1,7 +1,7 @@
 import SignaturePad from 'signature_pad';
 import { Spinner } from 'spin.js';
 import { sendEmail } from './services/emailService.js';
-import { generatePDF, downloadPDF, createPDF } from './services/pdfService.js';
+import { generatePDF, downloadPDF } from './services/pdfService.js';
 import { sendToAirtable } from './services/airtableService.js';
 import { saveWaiverToSupabase } from './utils/supabaseClient.js';
 
@@ -171,26 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (signatureError) {
                 console.error('Error al capturar firma:', signatureError);
-                // Crear una firma simulada como respaldo
-                const canvas = document.createElement('canvas');
-                canvas.width = 300;
-                canvas.height = 100;
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(50, 50);
-                ctx.lineTo(100, 40);
-                ctx.lineTo(150, 60);
-                ctx.lineTo(200, 40);
-                ctx.lineTo(250, 50);
-                ctx.stroke();
-                signatureDataUrl = canvas.toDataURL('image/png');
-                window.currentSignature = signatureDataUrl;
-                formData.append('signature', signatureDataUrl);
-                console.log('Se creó una firma simulada como respaldo');
+                throw signatureError;
             }
 
             // Obtener iniciales del nombre del invitado
@@ -237,8 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('PDF generado como Blob, URL temporal creada');
                 }
             } catch (pdfError) {
-                console.warn('Error con generatePDF, intentando createPDF:', pdfError);
-                pdfLink = await createPDF(formData);
+                throw pdfError;
             }
 
             // Enviar a Airtable y Supabase con el PDF Link (solo si es una URL válida)

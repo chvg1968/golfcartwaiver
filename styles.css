@@ -70,11 +70,19 @@ header {
 
 .initial-field {
     margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .initial-field label {
-    display: block;
-    margin-bottom: 5px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.checkbox-group label,
+.general-term {
+    text-align: justify;
 }
 
 .initial-field input {
