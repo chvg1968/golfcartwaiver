@@ -8,3 +8,6 @@ dist/
 
 # Documentación local (no publicar)
 README.md
+
+# Archivos temporales de trabajo
+tmp/
