@@ -78,24 +78,35 @@ export async function saveWaiverToSupabase({
 // Función helper para subir PDFs con mejor manejo de errores y reintentos
 export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
     let retryCount = 0;
+    let lastError = null;
     
     while (retryCount < maxRetries) {
         try {
             // Verificar que el blob sea válido
-            if (!pdfBlob || !(pdfBlob instanceof Blob)) {
-                throw new Error('El archivo PDF no es válido');
+            if (!pdfBlob) {
+                throw new Error('El archivo PDF es null o undefined');
             }
+            
+            if (!(pdfBlob instanceof Blob)) {
+                console.error('Tipo recibido:', typeof pdfBlob, pdfBlob);
+                throw new Error(`El archivo PDF no es un Blob válido. Tipo recibido: ${typeof pdfBlob}`);
+            }
+            
+            console.log('PDF Blob válido:', { size: pdfBlob.size, type: pdfBlob.type });
             
             // Verificar tamaño del archivo (límite de 5MB para ejemplo)
             if (pdfBlob.size > 5 * 1024 * 1024) {
                 throw new Error('El archivo PDF excede el tamaño máximo permitido (5MB)');
             }
             
+            if (pdfBlob.size === 0) {
+                throw new Error('El archivo PDF está vacío (0 bytes)');
+            }
+            
             // Usar la carpeta "public" dentro del bucket "pdfs"
             const filePath = `public/${fileName}`;
             
-            // Intentar verificar si el bucket existe y sus políticas antes de subir
-            await testBucketAccess();
+            console.log('Intentando subir PDF a:', filePath);
             
             // Subir el archivo
             const { data, error } = await supabase.storage
@@ -107,37 +118,55 @@ export async function uploadPDF(fileName, pdfBlob, maxRetries = 3) {
                 });
 
             if (error) {
-                console.error('Error de subida:', error);
+                console.error('Error de subida:', { statusCode: error.statusCode, message: error.message });
                 
                 // Si es un error de RLS, mostrar información más detallada
-                if (error.message.includes('row-level security policy')) {
-                    console.error('Error de políticas de seguridad (RLS). Necesitas configurar las políticas del bucket "pdfs" en Supabase.');
-                    console.error('Instrucciones para configurar RLS en el README.md');
+                if (error.message && error.message.includes('row-level security policy')) {
+                    console.error('\n========================================');
+                    console.error('ERROR DE POLÍTICAS RLS EN SUPABASE');
+                    console.error('========================================');
+                    console.error('El bucket "pdfs" tiene RLS habilitado pero no tiene políticas configuradas.');
+                    console.error('\nSOLUCIÓN: Ejecuta el archivo SUPABASE_RLS_SETUP.sql en el SQL Editor de Supabase');
+                    console.error('O configura las políticas manualmente en Storage > Buckets > pdfs > Policies');
+                    console.error('========================================\n');
                 }
                 
                 throw new Error(`Error al subir el archivo: ${error.message}`);
             }
 
+            console.log('PDF subido exitosamente:', data);
+
             // Obtener la URL pública
             const { data: publicUrlData } = supabase.storage
                 .from('pdfs')
                 .getPublicUrl(filePath);
+            
+            console.log('URL pública generada:', publicUrlData.publicUrl);
                 
             return publicUrlData.publicUrl;
 
         } catch (error) {
-            console.error(`Error en uploadPDF (intento ${retryCount + 1}/${maxRetries}):`, error);
+            lastError = error;
+            console.error(`Error en uploadPDF (intento ${retryCount + 1}/${maxRetries}):`, error.message);
             retryCount++;
+            
+            // No reintentar si es un error de RLS (no se resolverá con reintentos)
+            if (error.message && error.message.includes('row-level security policy')) {
+                console.error('Error de RLS detectado - no se reintentará');
+                throw error;
+            }
             
             if (retryCount >= maxRetries) {
                 console.error('Se agotaron los reintentos para subir el PDF');
-                throw error;
+                throw lastError;
             }
             
             // Esperar antes de reintentar (backoff exponencial)
             await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         }
     }
+    
+    throw lastError || new Error('Error desconocido al subir PDF');
 }
 
 // Función para probar el acceso al bucket

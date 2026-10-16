@@ -1,6 +1,10 @@
 .env
 node_modules
 .history/
+dist/
 
 # Local Netlify folder
 .netlify
+
+# Documentación local (no publicar)
+README.md

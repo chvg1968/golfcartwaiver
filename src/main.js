@@ -1,5 +1,6 @@
 import SignaturePad from 'signature_pad';
 import { Spinner } from 'spin.js';
+import Swal from 'sweetalert2';
 import { sendEmail } from './services/emailService.js';
 import { generatePDF, downloadPDF } from './services/pdfService.js';
 import { sendToAirtable } from './services/airtableService.js';
@@ -185,41 +186,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const formId = `LUXE-${guestInitials}-${new Date().getTime().toString().slice(-4)}-${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
             formData.append('Form Id', formId);
 
-            // Generar PDF primero
-            let pdfLink;
-            let pdfBlob;
-            try {
-                // Asegurarse de que la firma esté disponible globalmente
-                if (!window.currentSignature && window.signaturePad && !window.signaturePad.isEmpty()) {
-                    window.currentSignature = window.signaturePad.toDataURL('image/png');
-                    console.log('Firma capturada del pad y guardada globalmente');
-                }
-                
-                // Imprimir los valores de los campos para depuración
-                console.log('Valores del formulario:');
-                console.log('Guest Name:', formData.get('Guest Name'));
-                console.log('License:', formData.get('License'));
-                console.log('Issuing State:', formData.get('Issuing State'));
-                console.log('Address:', formData.get('Address'));
-                console.log('Signature Date:', formData.get('Signature Date'));
-                console.log('Iniciales:', Array.from(document.querySelectorAll('input.initial')).map(i => i.value));
-                
-                const pdfResult = await generatePDF(this);
-                
-                // Verificar si el resultado es una URL o un Blob
-                if (typeof pdfResult === 'string') {
-                    // Es una URL
-                    pdfLink = pdfResult;
-                    console.log('PDF generado y subido correctamente, URL:', pdfLink);
-                } else {
-                    // Es un Blob, intentar crear una URL temporal
-                    pdfBlob = pdfResult;
-                    pdfLink = URL.createObjectURL(pdfBlob);
-                    console.log('PDF generado como Blob, URL temporal creada');
-                }
-            } catch (pdfError) {
-                throw pdfError;
-            }
+            // Detener el envío si no se genera y sube el acuerdo completo y firmado.
+            const pdfLink = await generatePDF(this);
 
             // Enviar a Airtable y Supabase con el PDF Link (solo si es una URL válida)
             if (typeof pdfLink === 'string' && pdfLink.startsWith('http')) {
@@ -259,24 +227,48 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await sendEmail(formDataObject, pdfLink);
 
             if (result.success) {
-                // Descargar PDF de manera separada
-                if (pdfLink) {
-                    try {
-                        downloadPDF(pdfLink);
-                    } catch (downloadError) {
-                        console.error('Error al descargar PDF:', downloadError);
-                    }
-                }
-                
-                alert('Waiver enviado exitosamente');
+                // Mostrar mensaje de éxito primero
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Waiver Submitted',
+                    text: 'Your waiver has been successfully submitted. The PDF will download shortly.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#007bff',
+                    timer: 5000,
+                    timerProgressBar: true
+                });
+
                 form.reset();
                 window.signaturePad.clear();
+
+                // Descargar PDF después de un delay para que el usuario pueda leer el mensaje
+                if (pdfLink) {
+                    setTimeout(() => {
+                        try {
+                            downloadPDF(pdfLink);
+                        } catch (downloadError) {
+                            console.error('Error al descargar PDF:', downloadError);
+                        }
+                    }, 3000);
+                }
             } else {
-                alert(`Error al enviar waiver: ${result.error}`);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: result.error || 'An error occurred while submitting the waiver.',
+                    confirmButtonText: 'Try Again',
+                    confirmButtonColor: '#dc3545'
+                });
             }
         } catch (error) {
             console.error('Error detallado al procesar el formulario:', error);
-            alert(`Error: ${error.message}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'An unexpected error occurred.',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#dc3545'
+            });
         } finally {
             // Restaurar botón y ocultar spinner
             submitBtn.disabled = false;
