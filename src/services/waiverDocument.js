@@ -30,7 +30,7 @@ export function buildWaiverDocument(values, signature, logo) {
     }
     y += 3;
   }
-  function rich(item, reserve = 0) {
+  function wrap(item) {
     const size = item.kind === 'heading' ? 11 : 10;
     const step = size * 0.3528 * 1.35;
     pdf.setFontSize(size);
@@ -48,7 +48,9 @@ export function buildWaiverDocument(values, signature, logo) {
         lineWidth += w;
       }
     }
-    room(lines.length * step + 3 + reserve);
+    return { lines, size, step };
+  }
+  function rich(item, { lines, size, step }) {
     const firstBaseline = y;
     for (const [index, line] of lines.entries()) {
       // Justify complete paragraph lines; keep the final line naturally spaced.
@@ -112,10 +114,44 @@ export function buildWaiverDocument(values, signature, logo) {
   if (logo) { pdf.addImage(logo, 'PNG', (pageWidth - 30) / 2, y, 30, 37.5); y += 43; }
   plain('GENERAL LIABILITY WAIVER & EQUIPMENT USE AGREEMENT', 14, true, true);
   plain('(Golf Cart, BBQ Grill, Kitchen Appliances & All OnSite Equipment)', 10, true, true);
+  // Lay out the agreement before drawing it so pages can be planned as a whole.
+  const initialRow = 17; // INITIAL label and box, plus a blank line before the next term.
+  const signatureBlock = 105;
+  const blocks = agreement.map(item => {
+    const wrapped = wrap(item);
+    const height = wrapped.lines.length * wrapped.step + 3 + (item.kind === 'term' ? initialRow : 0);
+    return { item, wrapped, height };
+  });
+  // The closing section (from the last heading on) stays with the signature.
+  const closing = blocks.findLastIndex(block => block.item.kind === 'heading');
+  const closingHeight = blocks.slice(closing).reduce((sum, block) => sum + block.height, 0);
+  const forceBreak = closing > 0 && closingHeight + signatureBlock <= bottom - margin ? closing : -1;
+  const pages = [{ start: y, blocks: [] }];
+  let cursor = y;
+  blocks.forEach((block, i) => {
+    // A heading must fit together with the block that follows it.
+    const need = block.height + (block.item.kind === 'heading' ? blocks[i + 1]?.height || 0 : 0);
+    const page = pages.at(-1);
+    if (page.blocks.length && (i === forceBreak || cursor + need > bottom)) {
+      page.spread = i === forceBreak;
+      pages.push({ start: margin, blocks: [] });
+      cursor = margin;
+    }
+    pages.at(-1).blocks.push(block);
+    cursor += block.height;
+    pages.at(-1).end = cursor;
+  });
   let initial = 0;
-  for (const item of agreement) {
-    const baseline = rich(item, item.kind === 'term' ? 12 : item.kind === 'heading' ? 25 : 0);
-    if (item.kind === 'term') {
+  pages.forEach((page, pageIndex) => {
+    if (pageIndex) { pdf.addPage(); y = margin; }
+    // A page cut short for the closing section shares its spare space between
+    // its blocks, never separating a heading from the block below it.
+    const gaps = page.blocks.filter((block, i) => i && page.blocks[i - 1].item.kind !== 'heading').length;
+    const extra = page.spread && gaps ? (bottom - page.end) / gaps : 0;
+    page.blocks.forEach(({ item, wrapped }, i) => {
+      if (i && page.blocks[i - 1].item.kind !== 'heading') y += extra;
+      const baseline = rich(item, wrapped);
+      if (item.kind !== 'term') return;
       initial++;
       const box = [margin - 6, baseline - 3.2, 4, 4];
       pdf.setDrawColor('#BBBBBB');
@@ -146,10 +182,10 @@ export function buildWaiverDocument(values, signature, logo) {
       pdf.setTextColor('#FF0000');
       pdf.text('*', starX, labelY);
       field(`Initial ${initial}`, starX + pdf.getTextWidth('*') + 3, y, 16, 8, values?.[`Initial ${initial}`] || '');
-      y += 12;
-    }
-  }
-  room(105);
+      y += initialRow;
+    });
+  });
+  room(signatureBlock);
   plain('SIGNATURE & GUEST INFORMATION', 11, true);
   plain('Signature: *', 9);
   if (signature || filled) {
