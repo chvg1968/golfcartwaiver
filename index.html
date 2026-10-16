@@ -8,8 +8,9 @@
     <base href="/" />
     <style>
         /* Estilos para el spinner */
-        /* Overlay fijo: spin.js centra el spinner en la pantalla visible, sin scroll */
-        .spinner {
+        /* Overlay fijo: spin.js centra el spinner en la pantalla visible, sin scroll.
+           Se usa el id porque spin.js también pone la clase "spinner" a su elemento interno. */
+        #loading-spinner {
             display: none;
             position: fixed;
             inset: 0;

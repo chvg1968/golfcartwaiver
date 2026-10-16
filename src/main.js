@@ -1,4 +1,5 @@
 import { Spinner } from 'spin.js';
+import 'spin.js/spin.css';
 import Swal from 'sweetalert2';
 import { SignatureComponent } from './components/signature.js';
 import { captureWaiverData, submissionFormData } from './services/waiverData.js';
