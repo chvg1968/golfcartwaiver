@@ -11,3 +11,6 @@ README.md
 
 # Archivos temporales de trabajo
 tmp/
+
+# Metadatos de macOS
+.DS_Store
