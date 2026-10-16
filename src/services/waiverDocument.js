@@ -3,7 +3,10 @@ import agreement from '../content/waiver.json' with { type: 'json' };
 
 // Word run formatting is shared by the displayed agreement and PDF source.
 export function buildWaiverDocument(form, signature, logo) {
-  const pdf = new jsPDF({ unit: 'mm', format: 'letter', compress: true });
+  // jsPDF 3.0 also compresses empty AcroForm dictionaries into stream objects.
+  // Chrome rejects those field objects and hides every value, while leaving the
+  // signature (page content) visible. Keep form dictionaries as plain objects.
+  const pdf = new jsPDF({ unit: 'mm', format: 'letter', compress: false });
   const margin = 18;
   const pageWidth = pdf.internal.pageSize.getWidth();
   const width = pageWidth - margin * 2;

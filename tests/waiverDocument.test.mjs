@@ -68,3 +68,20 @@ test('adding a signature image retains all form values and checkbox states', () 
   for (const [name, value] of Object.entries(guest)) assert.equal(fields.get(name).value, value);
   assert.match(pdf.output(), /\/Subtype \/Image/);
 });
+
+test('form and field dictionaries are plain PDF objects that Chrome can read', () => {
+  const pdf = buildWaiverDocument(form, null, null);
+  const root = pdf.internal.acroformPlugin.acroFormDictionaryRoot;
+  const output = pdf.output();
+  // Some tolerant PDF readers recover values from malformed field streams;
+  // Chrome rejects them entirely. Test the serialized structure, not just /V.
+  for (const object of [root, ...root.Fields]) {
+    const start = output.indexOf(`\n${object.objId} 0 obj\n`);
+    assert.notEqual(start, -1);
+    const end = output.indexOf('\nendobj', start);
+    assert.notEqual(end, -1);
+    const serialized = output.slice(start, end);
+    assert.doesNotMatch(serialized, /\nstream\b/);
+    assert.doesNotMatch(serialized, /\/Filter\b|\/Length\b/);
+  }
+});
