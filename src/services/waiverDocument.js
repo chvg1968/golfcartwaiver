@@ -1,4 +1,4 @@
-import { jsPDF, AcroFormTextField } from 'jspdf';
+import { jsPDF, AcroFormTextField, AcroFormCheckBox } from 'jspdf';
 import agreement from '../content/waiver.json' with { type: 'json' };
 
 // Word run formatting is shared by the displayed agreement and PDF source.
@@ -43,6 +43,7 @@ export function buildWaiverDocument(form, signature, logo) {
       }
     }
     room(lines.length * step + 3 + reserve);
+    const firstBaseline = y;
     for (const [index, line] of lines.entries()) {
       // Justify complete paragraph lines; keep the final line naturally spaced.
       while (line.at(-1)?.text === ' ') line.pop();
@@ -70,6 +71,7 @@ export function buildWaiverDocument(form, signature, logo) {
       y += step;
     }
     y += 3;
+    return firstBaseline;
   }
   function field(name, x, top, w, h, value = '', signatureField = false) {
     pdf.setDrawColor('#BBBBBB');
@@ -95,9 +97,20 @@ export function buildWaiverDocument(form, signature, logo) {
   plain('(Golf Cart, BBQ Grill, Kitchen Appliances & All OnSite Equipment)', 10, true, true);
   let initial = 0;
   for (const item of agreement) {
-    rich(item, item.kind === 'term' ? 12 : item.kind === 'heading' ? 25 : 0);
+    const baseline = rich(item, item.kind === 'term' ? 12 : item.kind === 'heading' ? 25 : 0);
     if (item.kind === 'term') {
       initial++;
+      const checkbox = new AcroFormCheckBox();
+      checkbox.fieldName = `Acceptance ${initial}`;
+      checkbox.Rect = [margin - 6, baseline - 3.2, 4, 4];
+      pdf.setDrawColor('#BBBBBB');
+      pdf.setLineWidth(0.2);
+      pdf.rect(...checkbox.Rect);
+      const checked = form?.querySelector(`[name="Acceptance ${initial}"]`)?.checked === true;
+      checkbox.value = checked ? 'On' : 'Off';
+      checkbox.appearanceState = checked ? 'On' : 'Off';
+      checkbox.required = true;
+      pdf.addField(checkbox);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       pdf.setTextColor('#333333');
@@ -132,6 +145,14 @@ export function buildWaiverDocument(form, signature, logo) {
     pdf.setTextColor('#333333');
     pdf.text(`${name} *`, x, top);
     field(name, x, top + 2.5, colWidth, 9, form?.querySelector(`[name="${name}"]`)?.value || '');
+  });
+  // jsPDF generates initial /AP streams but omits the inherited defaults needed
+  // when Reader rebuilds text appearances after editing or saving a form.
+  const acroForm = pdf.internal.acroformPlugin.acroFormDictionaryRoot;
+  acroForm.DA = '/F1 10 Tf 0 g';
+  Object.defineProperty(acroForm, 'DR', {
+    value: '2 0 R', // The same document resource dictionary used by jsPDF's /AP streams.
+    configurable: false,
   });
   for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
     pdf.setPage(page);
