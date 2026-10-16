@@ -71,12 +71,12 @@ test('snapshot retains all 29 values and signature after the live form is cleare
   assert.equal(data.get('Acceptance 12'), 'on');
 });
 
-test('same guest and date receive different file names for each submission', () => {
+test('file name is Guest Name-Luxe-Signature Date', () => {
   const { form, pad } = fixture();
   const a = captureWaiverData(form, pad);
   const b = captureWaiverData(form, pad);
-  assert.notEqual(a.fileName, b.fileName);
-  assert.match(a.fileName, /^[A-Za-z0-9_-]+_\d{4}-\d{2}-\d{2}\.pdf$/);
+  assert.equal(a.fileName, 'QA_Test_Guest-Luxe-2026-10-16.pdf');
+  assert.notEqual(a.id, b.id);
 });
 
 test('incomplete or unsigned submissions fail before creating or uploading a PDF', () => {
@@ -122,6 +122,7 @@ test('two submissions of the same guest retain separate bytes and Airtable links
   const second = captureWaiverData(form, pad);
   const b = await generatePDF(second, null);
   assert.notEqual(a.publicUrl, b.publicUrl);
+  for (const url of [a.publicUrl, b.publicUrl]) assert.match(url, /\/server-\d+\/QA_Test_Guest-Luxe-2026-10-16\.pdf$/);
   assert.equal(store.objects.size, 2);
   const oldText = Buffer.from(await a.blob.arrayBuffer()).toString('latin1');
   const newText = Buffer.from(await b.blob.arrayBuffer()).toString('latin1');

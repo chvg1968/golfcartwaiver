@@ -26,7 +26,8 @@ export function captureWaiverData(form, signaturePad) {
     id,
     values: Object.freeze(values),
     signature: signaturePad.toDataURL('image/png'),
-    fileName: `${guestName}_${id}_${values['Signature Date']}.pdf`,
+    // Guest Name-Luxe-Signature Date; the server keeps each upload in its own folder.
+    fileName: `${guestName}-Luxe-${values['Signature Date']}.pdf`,
   });
 }
 

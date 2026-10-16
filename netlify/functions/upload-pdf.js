@@ -17,7 +17,7 @@ exports.createHandler = ({ createClientFn = createClient, createId = randomUUID,
     try { payload = JSON.parse(event.body); }
     catch { return reply(400, { message: 'Invalid JSON payload' }); }
     const { fileName, pdfBase64, sha256: expectedHash } = payload || {};
-    if (typeof fileName !== 'string' || !/^[A-Za-z0-9_-]+_\d{4}-\d{2}-\d{2}\.pdf$/.test(fileName) || fileName.length > 220) {
+    if (typeof fileName !== 'string' || !/^[A-Za-z0-9_-]+[_-]\d{4}-\d{2}-\d{2}\.pdf$/.test(fileName) || fileName.length > 220) {
         return reply(400, { message: 'Invalid PDF file name.' });
     }
     if (typeof pdfBase64 !== 'string' || !pdfBase64 || pdfBase64.length > 7 * 1024 * 1024) {
@@ -36,8 +36,9 @@ exports.createHandler = ({ createClientFn = createClient, createId = randomUUID,
     try {
         const supabase = createClientFn(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
         // Immutable storage objects: never overwrite an earlier guest submission.
-        // Even an older cached client receives a fresh, non-colliding URL.
-        const filePath = `public/${createId()}_${fileName}`;
+        // A fresh folder per upload keeps URLs unique while the file itself
+        // keeps the readable Guest Name-Luxe-Signature Date name.
+        const filePath = `public/${createId()}/${fileName}`;
         const bucket = supabase.storage.from('pdfs');
         const { error } = await bucket.upload(filePath, pdfBuffer, {
             contentType: 'application/pdf', cacheControl: '0', upsert: false,
