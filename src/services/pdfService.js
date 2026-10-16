@@ -1,93 +1,50 @@
-import { buildWaiverDocument } from "./waiverDocument";
+import { buildWaiverDocument } from './waiverDocument.js';
 
-// Función para subir PDF a través de Netlify Function (más seguro)
-async function uploadPDFViaServer(fileName, pdfBlob) {
-    try {
-        // Convertir Blob a base64
-        const base64 = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                // Remover el prefijo "data:application/pdf;base64,"
-                const base64String = reader.result.split(',')[1];
-                resolve(base64String);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(pdfBlob);
-        });
-
-        console.log('Enviando PDF a Netlify Function...');
-
-        const response = await fetch('/api/upload-pdf', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                fileName: fileName,
-                pdfBase64: base64,
-                contentType: 'application/pdf'
-            })
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-            console.error('Error del servidor:', result);
-            throw new Error(result.message || 'Error al subir PDF');
-        }
-
-        console.log('PDF subido exitosamente via servidor:', result.publicUrl);
-        return result.publicUrl;
-
-    } catch (error) {
-        console.error('Error en uploadPDFViaServer:', error);
-        throw error;
-    }
+export async function pdfChecksum(blob) {
+  const hash = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-
-function generateFileName(guestName) {
-  // Limpiar el nombre del huésped (remover caracteres especiales y espacios)
-  const cleanName = guestName
-    ? guestName
-        .replace(/[^a-zA-Z0-9]/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/^_|_$/g, "")
-    : "Guest";
-
-  // Obtener fecha actual en formato legible (YYYY-MM-DD)
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  const dateStr = `${year}-${month}-${day}`;
-
-  return `${cleanName}_${dateStr}.pdf`;
-}
-
-export async function generatePDF(formElement) {
-  const pad = window.signaturePad;
-  if (!pad || pad.isEmpty()) throw new Error('Please provide your signature.');
-  const signature = pad.toDataURL('image/png');
-  const logo = formElement.querySelector('.logo');
-  if (logo) await logo.decode();
-  const pdf = buildWaiverDocument(formElement, signature, logo);
-  const guestName = formElement.querySelector('input[name="Guest Name"]').value;
-  const publicUrl = await uploadPDFViaServer(generateFileName(guestName), pdf.output('blob'));
-  if (!publicUrl) throw new Error('Unable to upload the signed agreement. Please try again.');
-  return publicUrl;
-}
-
-// Función para descargar PDF (opcional, si se necesita)
-export function downloadPDF(pdfUrl, fileName = "waiver.pdf") {
-  try {
-    const link = document.createElement("a");
-    link.href = pdfUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  } catch (error) {
-    console.error("Error al descargar PDF:", error);
+export async function uploadPDFViaServer(fileName, blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 32768) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
   }
+  const sha256 = await pdfChecksum(blob);
+  const response = await fetch('/api/upload-pdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fileName, pdfBase64: btoa(binary), contentType: 'application/pdf', sha256 }),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.message || 'Unable to store the signed PDF. Please retry.');
+  if (!result.publicUrl || result.sha256 !== sha256) {
+    throw new Error('The stored PDF could not be verified. Your entries have been preserved.');
+  }
+  return result.publicUrl;
+}
+
+export async function generatePDF(submission, logo) {
+  if (!submission.signature || !submission.values || !submission.id) {
+    throw new Error('A complete submission is required to generate the signed PDF.');
+  }
+  if (logo) await logo.decode();
+  const pdf = buildWaiverDocument(submission.values, submission.signature, logo);
+  pdf.setProperties({ subject: `Signed equipment agreement ${submission.id}` });
+  const blob = pdf.output('blob');
+  const publicUrl = await uploadPDFViaServer(submission.fileName, blob);
+  // Download these exact bytes instead of re-fetching a potentially cached URL.
+  return { blob, fileName: submission.fileName, publicUrl };
+}
+
+export function downloadPDF(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

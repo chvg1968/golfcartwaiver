@@ -2,7 +2,7 @@ import { jsPDF, AcroFormTextField, AcroFormCheckBox } from 'jspdf';
 import agreement from '../content/waiver.json' with { type: 'json' };
 
 // Word run formatting is shared by the displayed agreement and PDF source.
-export function buildWaiverDocument(form, signature, logo) {
+export function buildWaiverDocument(values, signature, logo) {
   // jsPDF 3.0 also compresses empty AcroForm dictionaries into stream objects.
   // Chrome rejects those field objects and hides every value, while leaving the
   // signature (page content) visible. Keep form dictionaries as plain objects.
@@ -12,7 +12,10 @@ export function buildWaiverDocument(form, signature, logo) {
   const width = pageWidth - margin * 2;
   const bottom = pdf.internal.pageSize.getHeight() - 20;
   let y = margin;
-  const clean = text => text.replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, '-');
+  // A submitted waiver is flattened: every value is page content, not a form
+  // widget, because Airtable previews and many viewers never paint widgets.
+  const filled = Boolean(values);
+  const clean = text => String(text).replace(/[\u2018\u2019]/g, "'").replace(/[\u2013\u2014]/g, '-');
   const font = run => pdf.setFont('helvetica', run.bold ? (run.italic ? 'bolditalic' : 'bold') : (run.italic ? 'italic' : 'normal'));
   function room(height) {
     if (y + height > bottom) { pdf.addPage(); y = margin; }
@@ -80,6 +83,17 @@ export function buildWaiverDocument(form, signature, logo) {
     pdf.setDrawColor('#BBBBBB');
     pdf.setLineWidth(0.2);
     pdf.rect(x, top, w, h);
+    if (filled) {
+      if (!value) return;
+      const initialBox = name.startsWith('Initial ');
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.setTextColor('#000000');
+      let text = clean(value);
+      while (text.length > 1 && pdf.getTextWidth(text) > w - 2) text = text.slice(0, -1);
+      pdf.text(text, initialBox ? x + w / 2 : x + 1, top + h / 2, { align: initialBox ? 'center' : 'left', baseline: 'middle' });
+      return;
+    }
     const f = new AcroFormTextField();
     f.fieldName = name;
     f.Rect = [x, top, w, h];
@@ -103,17 +117,26 @@ export function buildWaiverDocument(form, signature, logo) {
     const baseline = rich(item, item.kind === 'term' ? 12 : item.kind === 'heading' ? 25 : 0);
     if (item.kind === 'term') {
       initial++;
-      const checkbox = new AcroFormCheckBox();
-      checkbox.fieldName = `Acceptance ${initial}`;
-      checkbox.Rect = [margin - 6, baseline - 3.2, 4, 4];
+      const box = [margin - 6, baseline - 3.2, 4, 4];
       pdf.setDrawColor('#BBBBBB');
       pdf.setLineWidth(0.2);
-      pdf.rect(...checkbox.Rect);
-      const checked = form?.querySelector(`[name="Acceptance ${initial}"]`)?.checked === true;
-      checkbox.value = checked ? 'On' : 'Off';
-      checkbox.appearanceState = checked ? 'On' : 'Off';
-      checkbox.required = true;
-      pdf.addField(checkbox);
+      pdf.rect(...box);
+      if (filled) {
+        if (values[`Acceptance ${initial}`] === true) {
+          const [bx, by] = box;
+          pdf.setDrawColor('#000000');
+          pdf.setLineWidth(0.5);
+          pdf.lines([[1, 1.2], [1.8, -2.6]], bx + 0.6, by + 2.1);
+        }
+      } else {
+        const checkbox = new AcroFormCheckBox();
+        checkbox.fieldName = `Acceptance ${initial}`;
+        checkbox.Rect = box;
+        checkbox.value = 'Off';
+        checkbox.appearanceState = 'Off';
+        checkbox.required = true;
+        pdf.addField(checkbox);
+      }
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       pdf.setTextColor('#333333');
@@ -122,18 +145,17 @@ export function buildWaiverDocument(form, signature, logo) {
       const starX = margin + pdf.getTextWidth('INITIAL ');
       pdf.setTextColor('#FF0000');
       pdf.text('*', starX, labelY);
-      const input = form?.querySelector(`[name="Initial ${initial}"]`);
-      field(`Initial ${initial}`, starX + pdf.getTextWidth('*') + 3, y, 16, 8, input?.value || '');
+      field(`Initial ${initial}`, starX + pdf.getTextWidth('*') + 3, y, 16, 8, values?.[`Initial ${initial}`] || '');
       y += 12;
     }
   }
   room(105);
   plain('SIGNATURE & GUEST INFORMATION', 11, true);
   plain('Signature: *', 9);
-  if (signature) {
+  if (signature || filled) {
     pdf.setDrawColor('#BBBBBB');
     pdf.rect(margin, y, width, 25);
-    pdf.addImage(signature, 'PNG', margin + 1, y + 1, width - 2, 23);
+    if (signature) pdf.addImage(signature, 'PNG', margin + 1, y + 1, width - 2, 23);
   } else {
     field('Signature', margin, y, width, 25, '', true);
   }
@@ -147,16 +169,18 @@ export function buildWaiverDocument(form, signature, logo) {
     pdf.setFontSize(9);
     pdf.setTextColor('#333333');
     pdf.text(`${name} *`, x, top);
-    field(name, x, top + 2.5, colWidth, 9, form?.querySelector(`[name="${name}"]`)?.value || '');
+    field(name, x, top + 2.5, colWidth, 9, values?.[name] || '');
   });
   // jsPDF generates initial /AP streams but omits the inherited defaults needed
   // when Reader rebuilds text appearances after editing or saving a form.
-  const acroForm = pdf.internal.acroformPlugin.acroFormDictionaryRoot;
-  acroForm.DA = '/F1 10 Tf 0 g';
-  Object.defineProperty(acroForm, 'DR', {
-    value: '2 0 R', // The same document resource dictionary used by jsPDF's /AP streams.
-    configurable: false,
-  });
+  if (!filled) {
+    const acroForm = pdf.internal.acroformPlugin.acroFormDictionaryRoot;
+    acroForm.DA = '/F1 10 Tf 0 g';
+    Object.defineProperty(acroForm, 'DR', {
+      value: '2 0 R', // The same document resource dictionary used by jsPDF's /AP streams.
+      configurable: false,
+    });
+  }
   for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
     pdf.setPage(page);
     pdf.setFont('helvetica', 'normal');
