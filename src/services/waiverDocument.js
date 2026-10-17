@@ -23,7 +23,7 @@ export function buildWaiverDocument(values, signature, logo) {
   function plain(text, size = 10, bold = false, center = false) {
     pdf.setFont('helvetica', bold ? 'bold' : 'normal');
     pdf.setFontSize(size);
-    pdf.setTextColor('#333333');
+    pdf.setTextColor('#000000');
     for (const line of pdf.splitTextToSize(clean(text), width)) {
       pdf.text(line, center ? pageWidth / 2 : margin, y, center ? { align: 'center' } : {});
       y += size * 0.3528 * 1.35;

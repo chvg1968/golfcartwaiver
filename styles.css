@@ -51,6 +51,11 @@ header {
     font-size: 14px;
 }
 
+/* Agreement text is neutral: black, regular weight; only headings are bold. */
+.main-text, .checkbox-group label, .general-term, form > h2 {
+    color: #000;
+}
+
 .main-text {
     text-align: justify;
     line-height: 1.6;

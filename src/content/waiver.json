@@ -7,7 +7,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -15,7 +15,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -23,7 +23,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -31,7 +31,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -39,7 +39,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -47,7 +47,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -55,7 +55,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -63,7 +63,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -77,7 +77,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -85,7 +85,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -93,7 +93,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -101,7 +101,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -109,7 +109,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -117,7 +117,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -125,7 +125,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -133,7 +133,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -141,7 +141,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -149,7 +149,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -157,7 +157,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -165,7 +165,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -173,7 +173,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -181,7 +181,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -189,7 +189,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -197,7 +197,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -211,7 +211,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -219,7 +219,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -227,31 +227,31 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": "I voluntarily agree to accept the risks of ",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": "associated with their use, including but not limited to fire, burns, electrical hazards, mechanical failure, bodily injury, property damage, and loss of life.",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": " ",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -262,66 +262,66 @@
     "runs": [
       {
         "text": "O",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": "n behalf of myself, my personal representatives and my heirs",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": ", I",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": " hereby voluntarily release the Owner and Property ",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": "M",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": "anager of the Unit at Bahia Beach Resort Community, and its directors, officers, employees, and agents from any and all claims, actions, causes of actions, suits, judgments and demands for bodily injury, property damage, loss of life and/or loss of services, in law or equity, that may in any way or manner arise out of use of the golf cart",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": ", BBQ grill, kitchen appliances, or any other equipment or amenities",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
         "text": ".",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -335,7 +335,7 @@
         "bold": true,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -349,7 +349,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -363,7 +363,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -377,35 +377,35 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
     "kind": "term"
   },
   {
-    "text": "I acknowledge and agree that upon arrival to the property I shall inspect the golf cart(s) and sign the Golf Cart Damage Inspection Checklist. Additionally, I agree that if I don\u2019t complete and execute such document by the day of check in at 11:59 P.M. it shall be understood that I waive such inspection right and accept the golf cart(s) as described in such document by Luxe Properties PR LLC. I accept I\u2019m responsible to pay for any other damages caused during my rental period",
+    "text": "I acknowledge and agree that upon arrival to the property I shall inspect the golf cart(s) and sign the Golf Cart Damage Inspection Checklist. Additionally, I agree that if I don’t complete and execute such document by the day of check in at 11:59 P.M. it shall be understood that I waive such inspection right and accept the golf cart(s) as described in such document by Luxe Properties PR LLC. I accept I’m responsible to pay for any other damages caused during my rental period",
     "runs": [
       {
-        "text": "I acknowledge and agree that upon arrival to the property I shall inspect the golf cart(s) and sign the Golf Cart Damage Inspection Checklist. Additionally, I agree that if I don\u2019t complete and execute such document by the day of check in at 11:59 P.M. it shall be understood that I waive such inspection right and accept the golf cart(s) as described in such document by Luxe Properties PR LLC. I accept I\u2019m responsible to pay for any other damages caused during my rental period",
+        "text": "I acknowledge and agree that upon arrival to the property I shall inspect the golf cart(s) and sign the Golf Cart Damage Inspection Checklist. Additionally, I agree that if I don’t complete and execute such document by the day of check in at 11:59 P.M. it shall be understood that I waive such inspection right and accept the golf cart(s) as described in such document by Luxe Properties PR LLC. I accept I’m responsible to pay for any other damages caused during my rental period",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
     "kind": "term"
   },
   {
-    "text": "I acknowledge that it is strictly forbidden for an individual without a valid driver\u2019s license to operate the golf cart. I am responsible for the possession/control of vehicle keys when not in use. Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death. The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community. No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer. In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun.",
+    "text": "I acknowledge that it is strictly forbidden for an individual without a valid driver’s license to operate the golf cart. I am responsible for the possession/control of vehicle keys when not in use. Golf carts are a motorized vehicle and driving or riding in these vehicles can lead to serious injury, property damage and even death. The use of these vehicles is for transportation and use should conform with all rules & regulations of the Bahia Beach Resort Community. No excessive speeding, joy riding, golf course or golf course path riding, beach, sand or off-road riding, disregard of traffic signs, or any type of unreasonable activity with the golf cart will be tolerated by the development. I will limit the number of golf cart occupants to the number of occupants recommended by the golf cart's manufacturer. In no way should the use of this vehicle be seen as an endorsement by the unit owner, property manager or Bahia Beach of a form of recreation or fun.",
     "runs": [
       {
-        "text": "I acknowledge that it is strictly forbidden for an individual without a valid driver\u2019s license to operate the golf cart",
+        "text": "I acknowledge that it is strictly forbidden for an individual without a valid driver’s license to operate the golf cart",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -413,7 +413,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -421,7 +421,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -429,7 +429,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -437,7 +437,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -445,7 +445,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -453,7 +453,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -461,7 +461,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -472,10 +472,10 @@
     "runs": [
       {
         "text": "I ACKNOWLEDGE THAT THE ASSOCIATION DOES NOT GIVE WARNINGS WITH REGARD TO VIOLATIONS OF APPLICABLE RULES. I ACKNOWLEDGE AND AGREE THAT IN THE EVENT MY GOLF CART IS USED IN VIOLATION OF THE RULES, THE POPERTY MANAGER MAY SEEK REIMBURSEMENTS OF ANY FINES IMPOSED BY THE DEVELOPMENT AND/OR LEVY FINES AGAINST ME",
-        "bold": true,
+        "bold": false,
         "italic": false,
         "underline": false,
-        "color": "333333",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -489,7 +489,7 @@
         "bold": true,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -503,7 +503,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -511,45 +511,45 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       },
       {
         "text": "that proper, safe, and cautious use of all equipment is solely my responsibility",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       },
       {
         "text": ".",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       },
       {
         "text": " ",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       }
     ],
     "kind": "term"
   },
   {
-    "text": "I acknowledge that improper use of the BBQ grill\u2014including leaving it unattended, failing to clean grease traps, using unauthorized fuels, or placing flammable items nearby\u2014can result in fire, injury, or property damage, for which I accept full responsibility. I understand and agree that the use of the BBQ grill is entirely at my own risk, and that the decision to use it rests solely with me. I further acknowledge that Luxe Properties PR LLC and the Unit Owner cannot supervise or control how the grill is used during my stay, and therefore bear no responsibility for any incident, malfunction, or accident that may occur once I have taken possession of the property.",
+    "text": "I acknowledge that improper use of the BBQ grill—including leaving it unattended, failing to clean grease traps, using unauthorized fuels, or placing flammable items nearby—can result in fire, injury, or property damage, for which I accept full responsibility. I understand and agree that the use of the BBQ grill is entirely at my own risk, and that the decision to use it rests solely with me. I further acknowledge that Luxe Properties PR LLC and the Unit Owner cannot supervise or control how the grill is used during my stay, and therefore bear no responsibility for any incident, malfunction, or accident that may occur once I have taken possession of the property.",
     "runs": [
       {
-        "text": "I acknowledge that improper use of the BBQ grill\u2014including leaving it unattended, failing to clean grease traps, using unauthorized fuels, or placing flammable items nearby\u2014can result in fire, injury, or property damage, for which I accept full responsibility. ",
+        "text": "I acknowledge that improper use of the BBQ grill—including leaving it unattended, failing to clean grease traps, using unauthorized fuels, or placing flammable items nearby—can result in fire, injury, or property damage, for which I accept full responsibility. ",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -557,8 +557,8 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       }
     ],
     "kind": "term"
@@ -571,7 +571,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -579,8 +579,8 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       }
     ],
     "kind": "term"
@@ -593,7 +593,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -601,8 +601,8 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       }
     ],
     "kind": "term"
@@ -615,7 +615,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -623,8 +623,8 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       }
     ],
     "kind": "term"
@@ -637,7 +637,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       },
       {
@@ -645,23 +645,23 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       },
       {
         "text": ".",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       },
       {
         "text": " ",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -675,21 +675,21 @@
         "bold": true,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       }
     ],
     "kind": "heading"
   },
   {
-    "text": "I understand that all equipment provided with the rental\u2014whether indoors or outdoors\u2014is for functional use only and not intended as recreational or entertainment devices. I accept full responsibility for supervising all individuals who use any equipment with my permission.",
+    "text": "I understand that all equipment provided with the rental—whether indoors or outdoors—is for functional use only and not intended as recreational or entertainment devices. I accept full responsibility for supervising all individuals who use any equipment with my permission.",
     "runs": [
       {
-        "text": "I understand that all equipment provided with the rental\u2014whether indoors or outdoors\u2014is for functional use only and not intended as recreational or entertainment devices. I accept full responsibility for supervising all individuals who use any equipment with my permission.",
+        "text": "I understand that all equipment provided with the rental—whether indoors or outdoors—is for functional use only and not intended as recreational or entertainment devices. I accept full responsibility for supervising all individuals who use any equipment with my permission.",
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -703,7 +703,7 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
+        "color": "000000",
         "highlight": false
       }
     ],
@@ -717,8 +717,8 @@
         "bold": false,
         "italic": false,
         "underline": false,
-        "color": "FF0000",
-        "highlight": true
+        "color": "000000",
+        "highlight": false
       }
     ],
     "kind": "paragraph"
